@@ -1,4 +1,5 @@
 from flask import Blueprint, app, render_template, request, flash, redirect, url_for, session, abort
+import secrets
 from .models import Restaurant, MenuItem, User
 from sqlalchemy import asc
 from . import db
@@ -160,6 +161,7 @@ def login():
 
         # Store user ID in the session to maintain the session
         session['user_id'] = user.id
+        session['token'] = secrets.token_hex(16)
 
         flash('Logged in successfully.')
         return redirect(url_for('main.showRestaurants'))
@@ -168,7 +170,7 @@ def login():
 
 @main.route('/admin/restaurant-owner/new', methods=['GET', 'POST'])
 def newRestaurantOwner():
-    if 'user_id' not in session:
+    if 'user_id' not in session or 'token' not in session or session['token'] != request.headers.get('Authorization'):
         abort(401)  # Unauthorized access
 
     user = User.query.get(session['user_id'])
@@ -179,3 +181,9 @@ def newRestaurantOwner():
 
     # Render the appropriate template or redirect as needed
     return render_template('new_restaurant_owner.html')
+
+@main.route('/logout')
+def logout():
+    session.clear()  # Clear the session data
+    flash('Logged out successfully.')
+    return redirect(url_for('main.showRestaurants'))
