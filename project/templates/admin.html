@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <h1>Admin Dashboard</h1>
+
+  <h2>User Information</h2>
+  <p>Username: {{ user.username }}</p>
+  <p>Role: {{ user.role }}</p>
+
+  <h2>Update User Information</h2>
+  <form action="{{ url_for('main.updateUser', user_id=user.id) }}" method="POST">
+    <label for="username">Username:</label>
+    <input type="text" id="username" name="username" value="{{ user.username }}" required>
+    <br>
+    <label for="role">Role:</label>
+    <select id="role" name="role" required>
+      <option value="{{ UserRole.ADMIN }}" {% if user.role == UserRole.ADMIN %}selected{% endif %}>Administrator</option>
+      <option value="{{ UserRole.RESTAURANT_OWNER }}" {% if user.role == UserRole.RESTAURANT_OWNER %}selected{% endif %}>Restaurant Owner</option>
+      <option value="{{ UserRole.PUBLIC_USER }}" {% if user.role == UserRole.PUBLIC_USER %}selected{% endif %}>Public User</option>
+    </select>
+    <br>
+    <input type="submit" value="Update">
+  </form>
+{% endblock %}

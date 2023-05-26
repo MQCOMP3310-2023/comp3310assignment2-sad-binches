@@ -168,6 +168,11 @@ def login():
     else:
         return render_template('login.html', form=form)
 
+class UserRole:
+    ADMIN = 'admin'
+    RESTAURANT_OWNER = 'restaurant_owner'
+    PUBLIC_USER = 'public_user'
+
 @main.route('/admin/restaurant-owner/new', methods=['GET', 'POST'])
 def newRestaurantOwner():
     if 'user_id' not in session or 'token' not in session or session['token'] != request.headers.get('Authorization'):
@@ -187,3 +192,24 @@ def logout():
     session.clear()  # Clear the session data
     flash('Logged out successfully.')
     return redirect(url_for('main.showRestaurants'))
+
+@main.route('/admin/user/<int:user_id>/update', methods=['POST'])
+def updateUser(user_id):
+    user = User.query.get(user_id)
+    if not user:
+        abort(404)  # User not found
+
+    if request.method == 'POST':
+        username = request.form['username']
+        role = request.form['role']
+
+        user.username = username
+        user.role = role
+
+        db.session.commit()
+
+        flash('User information updated successfully.')
+        return redirect(url_for('main.adminDashboard'))
+    else:
+        return redirect(url_for('main.adminDashboard'))  
+    # Redirect to admin dashboard if not a POST request
