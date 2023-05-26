@@ -87,6 +87,13 @@ def editMenuItem(restaurant_id, menu_id):
     editedItem = db.session.query(MenuItem).filter_by(id = menu_id).one()
     restaurant = db.session.query(Restaurant).filter_by(id = restaurant_id).one()
     if request.method == 'POST':
+        if(all([
+            request.form['name'],
+            request.form['description'],
+            request.form['price'],
+            request.form['course']
+        ])):
+            pass
         if request.form['name']:
             editedItem.name = request.form['name']
         if request.form['description']:
@@ -105,9 +112,16 @@ def editMenuItem(restaurant_id, menu_id):
 
 #Delete a menu item
 @main.route('/restaurant/<int:restaurant_id>/menu/<int:menu_id>/delete', methods = ['GET','POST'])
+@login_required  # Ensure the user is logged in
 def deleteMenuItem(restaurant_id,menu_id):
     restaurant = db.session.query(Restaurant).filter_by(id = restaurant_id).one()
     itemToDelete = db.session.query(MenuItem).filter_by(id = menu_id).one() 
+
+     # Check if the user is the owner of the restaurant or an administrator
+    if not (current_user == restaurant.owner or current_user.role == 'admin'):
+        flash("You don't have permission to delete this menu item.")
+        return redirect(url_for('main.showMenu', restaurant_id=restaurant_id))
+    
     if request.method == 'POST':
         db.session.delete(itemToDelete)
         db.session.commit()
