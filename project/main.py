@@ -20,7 +20,7 @@ def showRestaurants():
 #Create a new restaurant
 @main.route('/restaurant/new/', methods=['GET','POST'])
 def newRestaurant():
-    form = RestaurantForm()  # Create an instance of the RestaurantForm
+    form = Restaurant.RestaurantForm()  # Create an instance of the RestaurantForm
 
     if form.validate_on_submit():
         newRestaurant = Restaurant(name=form.name.data)
@@ -117,10 +117,17 @@ def deleteMenuItem(restaurant_id,menu_id):
 
 @main.route('/register', methods=['GET', 'POST'])
 def register():
+    form = User.RegistrationForm()  # Create an instance of the RegistrationForm
+
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
-        role = 'Public User'  # Default role for new users
+        confirm_password = request.form['confirm_password']
+
+        # Validate the form data
+        if password != confirm_password:
+            flash('Passwords do not match. Please try again.')
+            return redirect(url_for('main.register'))
 
         # Check if username already exists
         existing_user = User.query.filter_by(username=username).first()
@@ -128,7 +135,7 @@ def register():
             flash('Username already exists. Please choose a different username.')
             return redirect(url_for('main.register'))
 
-        new_user = User(username=username, role=role)
+        new_user = User(username=username, role='Public User')
         new_user.set_password(password)
         db.session.add(new_user)
         db.session.commit()
@@ -136,10 +143,12 @@ def register():
         flash('Registration successful. You can now log in.')
         return redirect(url_for('main.login'))
     else:
-        return render_template('register.html')
+        return render_template('register.html', form=form)
 
 @main.route('/login', methods=['GET', 'POST'])
 def login():
+    form = User.LoginForm()  # Create an instance of the LoginForm
+
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
@@ -155,7 +164,7 @@ def login():
         flash('Logged in successfully.')
         return redirect(url_for('main.showRestaurants'))
     else:
-        return render_template('login.html')
+        return render_template('login.html', form=form)
 
 @main.route('/admin/restaurant-owner/new', methods=['GET', 'POST'])
 def newRestaurantOwner():
