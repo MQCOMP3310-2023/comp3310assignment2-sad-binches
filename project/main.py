@@ -84,7 +84,7 @@ def newMenuItem(restaurant_id):
   restaurant = db.session.query(Restaurant).filter_by(id = restaurant_id).one()
   if request.method == 'POST':
       #implemented input sanitsation again
-      newItem = MenuItem(name = escape(request.form['name']), description = sanitise_input(request.form['description']), price = escape(request.form['price']), course = escape(request.form['course']), restaurant_id = restaurant_id)
+      newItem = MenuItem(name = escape(request.form['name']), description = sanitise_input(request.form['description']), price = "$"+escape(request.form['price']), course = escape(request.form['course']), restaurant_id = restaurant_id)
       db.session.add(newItem)
       db.session.commit()
       flash('New Menu %s Item Successfully Created' % (newItem.name))
@@ -105,7 +105,7 @@ def editMenuItem(restaurant_id, menu_id):
         if request.form['description']:
             editedItem.description = sanitise_input(request.form['description']) # no special characters needed so used custom function to keep it alpha numeric
         if request.form['price']:
-            editedItem.price = escape(request.form['price'])
+            editedItem.price = "$"+escape(request.form['price'])
         if request.form['course']:
             editedItem.course = escape(request.form['course'])
         db.session.add(editedItem)
