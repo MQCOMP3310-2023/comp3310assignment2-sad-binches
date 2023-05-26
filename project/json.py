@@ -6,24 +6,47 @@ import json as pyjs
 
 json = Blueprint('json', __name__)
 
-#JSON APIs to view Restaurant Information
-@json.route('/restaurant/<restaurant_id>/menu/JSON')
+# JSON APIs to view Restaurant Information
+# Used named parameter to prevent sqli (Parameterised query)
+@json.route('/restaurant/<int:restaurant_id>/menu/JSON')
 def restaurantMenuJSON(restaurant_id):
-    items = db.session.execute(text('select * from menu_item where restaurant_id = ' + str(restaurant_id)))
-    items_list = [ i._asdict() for i in items ]
-    return pyjs.dumps(items_list)
+    # Updated SQL query using named parameter
+    query = "SELECT * FROM menu_item WHERE restaurant_id = :restaurant_id"
+    
+    # Executing the query with named parameter
+    result = db.session.execute(text(query), {'restaurant_id': restaurant_id})
+    
+    # Converting rows to dictionaries
+    items_list = [dict(row) for row in result]
+    
+    # Returning JSON response using Flask's jsonify function
+    return jsonify(items_list)
 
-
+# Used named parameter to prevent sqli (Parameterised query)
 @json.route('/restaurant/<restaurant_id>/menu/<int:menu_id>/JSON')
 def menuItemJSON(restaurant_id, menu_id):
-    Menu_Item = db.session.execute(text('select * from menu_item where id = ' + str(menu_id) + ' limit 1'))
-    items_list = [ i._asdict() for i in Menu_Item ]
-    return pyjs.dumps(items_list)
+    # Updated SQL query using named parameter
+    query = "SELECT * FROM menu_item WHERE id = :menu_id LIMIT 1"
+    
+    # Executing the query with named parameter
+    result = db.session.execute(text(query), {'menu_id': menu_id})
+    
+    # Converting rows to dictionaries
+    items_list = [dict(row) for row in result]
+    
+    # Returning JSON response using Flask's jsonify function
+    return jsonify(items_list)
 
+# Used Endpoint to retrieve all restaurant data as JSON (No user input used)
 @json.route('/restaurant/JSON')
 def restaurantsJSON():
-    restaurants = db.session.execute(text('select * from restaurant'))
-    rest_list = [ r._asdict() for r in restaurants ]
-    return pyjs.dumps(rest_list)
+    # Retrieve all restaurant objects from the database
+    restaurants = Restaurant.query.all()
+
+    # Convert each restaurant object to a dictionary representation
+    rest_list = [restaurant.to_dict() for restaurant in restaurants]
+
+    # Return the list of dictionaries as a JSON response
+    return jsonify(rest_list)
 
 
