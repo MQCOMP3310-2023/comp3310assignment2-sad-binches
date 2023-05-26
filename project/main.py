@@ -1,9 +1,14 @@
-from flask import Blueprint, render_template, request, flash, redirect, url_for, session, abort
+from flask import Blueprint, app, render_template, request, flash, redirect, url_for, session, abort
 from .models import Restaurant, MenuItem, User
 from sqlalchemy import asc
 from . import db
+from flask_wtf import FlaskForm
+from wtforms import StringField, PasswordField, SubmitField
+from wtforms.validators import DataRequired
+from flask_wtf.csrf import CSRFProtect
 
 main = Blueprint('main', __name__)
+csrf = CSRFProtect()
 
 #Show all restaurants
 @main.route('/')
@@ -15,14 +20,16 @@ def showRestaurants():
 #Create a new restaurant
 @main.route('/restaurant/new/', methods=['GET','POST'])
 def newRestaurant():
-  if request.method == 'POST':
-      newRestaurant = Restaurant(name = request.form['name'])
-      db.session.add(newRestaurant)
-      flash('New Restaurant %s Successfully Created' % newRestaurant.name)
-      db.session.commit()
-      return redirect(url_for('main.showRestaurants'))
-  else:
-      return render_template('newRestaurant.html')
+    form = RestaurantForm()  # Create an instance of the RestaurantForm
+
+    if form.validate_on_submit():
+        newRestaurant = Restaurant(name=form.name.data)
+        db.session.add(newRestaurant)
+        db.session.commit()
+        flash('New Restaurant %s Successfully Created' % newRestaurant.name)
+        return redirect(url_for('main.showRestaurants'))
+        
+    return render_template('newRestaurant.html', form=form)
 
 #Edit a restaurant
 @main.route('/restaurant/<int:restaurant_id>/edit/', methods = ['GET', 'POST'])
