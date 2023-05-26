@@ -25,22 +25,19 @@ def showRestaurants():
   restaurants = db.session.query(Restaurant).order_by(asc(Restaurant.name))
   return render_template('restaurants.html', restaurants = restaurants)
 
+#Fixed the below code that broke during other implementations 
 #Create a new restaurant
-@main.route('/restaurant/new/', methods=['GET','POST'])
+@main.route('/restaurant/new/', methods=['GET', 'POST'])
 def newRestaurant():
-  if request.method == 'POST':
-      #using the escape function to prevent possible xss by escaping special characters 
-      name = escape(request.form['name']) 
-      newRestaurant = Restaurant(name=name)
-      db.session.add(newRestaurant)
-      flash('New Restaurant %s Successfully Created' % newRestaurant.name)
-      db.session.commit()
-      return redirect(url_for('main.showRestaurants'))
-  
-
-
-  else:
-      return render_template('newRestaurant.html')
+    if request.method == 'POST':
+        name = escape(request.form['name'])
+        newRestaurant = Restaurant(name=name)
+        db.session.add(newRestaurant)
+        flash('New Restaurant %s Successfully Created' % newRestaurant.name)
+        db.session.commit()
+        return redirect(url_for('main.showRestaurants'))
+    else:
+        return render_template('newRestaurant.html')
 
 # Security for input sanitisation + error caused by changes  that i couldn't fix without the db.commit
 @main.route('/restaurant/<int:restaurant_id>/edit/', methods=['GET', 'POST'])
