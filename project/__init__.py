@@ -1,6 +1,8 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 
+from flask_sslify import SSLify
+
 # init SQLAlchemy so we can use it later in our models
 db = SQLAlchemy()
 
@@ -11,6 +13,8 @@ def create_app():
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///restaurantmenu.db'
 
     db.init_app(app)
+
+    sslify = SSLify(app) # Enable HTTPS redirection
 
     # blueprint for auth routes in our app
     from .json import json as json_blueprint
