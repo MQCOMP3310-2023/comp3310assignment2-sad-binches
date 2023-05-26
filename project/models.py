@@ -1,4 +1,7 @@
 from . import db
+from flask_wtf import FlaskForm
+from wtforms import StringField, SubmitField
+from wtforms.validators import DataRequired
 
 class Restaurant(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -31,4 +34,8 @@ class MenuItem(db.Model):
            'price'      : self.price,
            'course'     : self.course,
        }
+
+class SearchForm(FlaskForm):
+    searched = StringField("Searched", validators=[DataRequired()])
+    submit = SubmitField("Submit")  
 

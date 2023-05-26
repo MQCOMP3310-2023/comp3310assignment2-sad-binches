@@ -1,9 +1,14 @@
 from flask import Blueprint, render_template, request, flash, redirect, url_for
-from .models import Restaurant, MenuItem
+from .models import Restaurant, MenuItem, SearchForm
 from sqlalchemy import asc
 from . import db
 
 main = Blueprint('main', __name__)
+
+@main.context_processor
+def base():
+    form = SearchForm()
+    return dict(form=form)
 
 #Show all restaurants
 @main.route('/')
@@ -16,7 +21,7 @@ def showRestaurants():
 @main.route('/restaurant/new/', methods=['GET','POST'])
 def newRestaurant():
   if request.method == 'POST':
-      newRestaurant = Restaurant(name = request.form['name'])
+      newRestaurant = Restaurant(name = request.form['name'])   
       db.session.add(newRestaurant)
       flash('New Restaurant %s Successfully Created' % newRestaurant.name)
       db.session.commit()
@@ -107,3 +112,13 @@ def deleteMenuItem(restaurant_id,menu_id):
         return redirect(url_for('main.showMenu', restaurant_id = restaurant_id))
     else:
         return render_template('deleteMenuItem.html', item = itemToDelete)
+
+#Create search bar
+@main.route('/search', methods=["POST"])
+def search():
+   form = SearchForm()
+   if form.validate_on_submit(): 
+      post_searched = form.searched.data
+      return render_template("searchbar.html",
+        form=form,
+        searched = post_searched)

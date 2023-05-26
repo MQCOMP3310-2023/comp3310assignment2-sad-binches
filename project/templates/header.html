@@ -5,6 +5,13 @@
 		</a>
 	</div>
 	<div class="col-md-6 text-right">
+		<form method="POST" action="{{url_for('main.search')}}" class="d-flex">
+			{{form.hidden_tag() }}
+			<input class="form" type="search" placeholder="Search" aria-label="Search" name="searched">
+			<button class="button" type="submit">
+				Search
+			</button>
+		</form>
 					<p>Login Link will go Here </p>
 		
 	</div>
