@@ -1,5 +1,5 @@
-from flask import Blueprint, render_template, request, flash, redirect, url_for
-from .models import Restaurant, MenuItem
+from flask import Blueprint, render_template, request, flash, redirect, url_for, session, abort
+from .models import Restaurant, MenuItem, User
 from sqlalchemy import asc
 from . import db
 
@@ -107,3 +107,59 @@ def deleteMenuItem(restaurant_id,menu_id):
         return redirect(url_for('main.showMenu', restaurant_id = restaurant_id))
     else:
         return render_template('deleteMenuItem.html', item = itemToDelete)
+
+@main.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        role = 'Public User'  # Default role for new users
+
+        # Check if username already exists
+        existing_user = User.query.filter_by(username=username).first()
+        if existing_user:
+            flash('Username already exists. Please choose a different username.')
+            return redirect(url_for('main.register'))
+
+        new_user = User(username=username, role=role)
+        new_user.set_password(password)
+        db.session.add(new_user)
+        db.session.commit()
+
+        flash('Registration successful. You can now log in.')
+        return redirect(url_for('main.login'))
+    else:
+        return render_template('register.html')
+
+@main.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+
+        user = User.query.filter_by(username=username).first()
+        if not user or not user.check_password(password):
+            flash('Invalid username or password.')
+            return redirect(url_for('main.login'))
+
+        # Store user ID in the session to maintain the session
+        session['user_id'] = user.id
+
+        flash('Logged in successfully.')
+        return redirect(url_for('main.showRestaurants'))
+    else:
+        return render_template('login.html')
+
+@main.route('/admin/restaurant-owner/new', methods=['GET', 'POST'])
+def newRestaurantOwner():
+    if 'user_id' not in session:
+        abort(401)  # Unauthorized access
+
+    user = User.query.get(session['user_id'])
+    if user.role != 'Administrator':
+        abort(403)  # Access forbidden for non-administrators
+
+    # Rest of the code for adding a new restaurant owner
+
+    # Render the appropriate template or redirect as needed
+    return render_template('new_restaurant_owner.html')
