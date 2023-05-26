@@ -2,8 +2,16 @@ from flask import Blueprint, render_template, request, flash, redirect, url_for
 from .models import Restaurant, MenuItem
 from sqlalchemy import asc
 from . import db
+import re
+from markupsafe import escape
+
 
 main = Blueprint('main', __name__)
+
+#input sanitisation code to prevent injection sequences 
+def sanitise_input(input_string):
+    sanitised_string = re.sub(r'[^a-zA-Z0-9]', '', input_string)
+    return sanitised_string
 
 #Show all restaurants
 @main.route('/')
@@ -16,11 +24,16 @@ def showRestaurants():
 @main.route('/restaurant/new/', methods=['GET','POST'])
 def newRestaurant():
   if request.method == 'POST':
-      newRestaurant = Restaurant(name = request.form['name'])
+      #using the escape function to prevent possible xss by escaping special characters 
+      name = escape(request.form['name']) 
+      newRestaurant = Restaurant(name=name)
       db.session.add(newRestaurant)
       flash('New Restaurant %s Successfully Created' % newRestaurant.name)
       db.session.commit()
       return redirect(url_for('main.showRestaurants'))
+  
+
+
   else:
       return render_template('newRestaurant.html')
 
@@ -64,7 +77,8 @@ def showMenu(restaurant_id):
 def newMenuItem(restaurant_id):
   restaurant = db.session.query(Restaurant).filter_by(id = restaurant_id).one()
   if request.method == 'POST':
-      newItem = MenuItem(name = request.form['name'], description = request.form['description'], price = request.form['price'], course = request.form['course'], restaurant_id = restaurant_id)
+      #implemented input sanitsation again
+      newItem = MenuItem(name = escape(request.form['name']), description = sanitise_input(request.form['description']), price = escape(request.form['price']), course = escape(request.form['course']), restaurant_id = restaurant_id)
       db.session.add(newItem)
       db.session.commit()
       flash('New Menu %s Item Successfully Created' % (newItem.name))
@@ -79,14 +93,15 @@ def editMenuItem(restaurant_id, menu_id):
     editedItem = db.session.query(MenuItem).filter_by(id = menu_id).one()
     restaurant = db.session.query(Restaurant).filter_by(id = restaurant_id).one()
     if request.method == 'POST':
+        #implemented input sanitsation again
         if request.form['name']:
-            editedItem.name = request.form['name']
+            editedItem.name = escape(request.form['name'])
         if request.form['description']:
-            editedItem.description = request.form['description']
+            editedItem.description = sanitise_input(request.form['description']) # no special characters needed so used custom function to keep it alpha numeric
         if request.form['price']:
-            editedItem.price = request.form['price']
+            editedItem.price = escape(request.form['price'])
         if request.form['course']:
-            editedItem.course = request.form['course']
+            editedItem.course = escape(request.form['course'])
         db.session.add(editedItem)
         db.session.commit() 
         flash('Menu Item Successfully Edited')
