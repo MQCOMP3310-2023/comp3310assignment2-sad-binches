@@ -119,7 +119,7 @@ def search():
    form = SearchForm()
    items = MenuItem.query
    if form.validate_on_submit(): 
-      #Get data from submitted search
+      #Recieve input from submitted search
       text_searched = form.searched.data
       #Query the Database
       items = items.filter(MenuItem.name.like('%' + text_searched + '%'))
