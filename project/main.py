@@ -117,8 +117,15 @@ def deleteMenuItem(restaurant_id,menu_id):
 @main.route('/search', methods=["POST"])
 def search():
    form = SearchForm()
+   items = MenuItem.query
    if form.validate_on_submit(): 
-      post_searched = form.searched.data
+      #Get data from submitted search
+      text_searched = form.searched.data
+      #Query the Database
+      items = items.filter(MenuItem.name.like('%' + text_searched + '%'))
+      #items = items.order_by(MenuItem).all()
+        
       return render_template("searchbar.html",
-        form=form,
-        searched = post_searched)
+        form = form,
+        searched = text_searched,
+        items = items)

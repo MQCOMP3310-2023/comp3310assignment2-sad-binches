@@ -3,7 +3,20 @@
 {% include "header.html" %}
 
 <br/>
-<h2>Searching for...</h2>>
+<h2>Searching for...</h2>> 
 <p>{{ searched }}</p>
+<br/>
+
+{% for item in items %}
+    <a href="{{url_for('main.newRestaurant')}}">
+        <h3>{{ item.name }} </h3>
+    </a><br/>
+{% endfor %}
+    
+
+{% for restaurant in restaurants %}
+<h3>{{ restaurant.name}} </h3>
+{% endfor %}
+    
 
 {% endblock %}
