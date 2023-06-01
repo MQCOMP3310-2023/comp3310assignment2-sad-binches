@@ -1,5 +1,5 @@
-##Tasks
-###Note 
+## Tasks
+### Note 
 Keep in mind this can't be done last minute and to remember to keep security at the forefront of your mind when you implement these features
 please log when you are working on a feature so people don't double up - Kay
 to mark a task of simply adjust the below checkbox to look like this "[x]" and commit the change 
