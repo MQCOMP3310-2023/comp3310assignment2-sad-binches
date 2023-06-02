@@ -1,5 +1,5 @@
 from flask import Blueprint, app, render_template, request, flash, redirect, url_for, session, abort
-from .models import Restaurant, MenuItem, User
+from .models import Restaurant, MenuItem, User, SearchForm
 from sqlalchemy import asc
 from . import db
 from flask_wtf import FlaskForm
@@ -9,6 +9,11 @@ from flask_wtf.csrf import CSRFProtect
 import re
 from markupsafe import escape
 
+from flask import Blueprint, render_template, request, flash, redirect, url_for
+from .models import Restaurant, MenuItem, SearchForm
+from sqlalchemy import asc
+from . import db
+import re
 
 main = Blueprint('main', __name__)
 csrf = CSRFProtect()
@@ -18,6 +23,11 @@ def sanitise_input(input_string):
     sanitised_string = re.sub(r'[^a-zA-Z0-9]', '', input_string)
     return sanitised_string
 
+@main.context_processor
+def base():
+    form = SearchForm()
+    return dict(form=form)
+
 #Show all restaurants
 @main.route('/')
 @main.route('/restaurant/')
@@ -25,22 +35,19 @@ def showRestaurants():
   restaurants = db.session.query(Restaurant).order_by(asc(Restaurant.name))
   return render_template('restaurants.html', restaurants = restaurants)
 
+#Fixed the below code that broke during other implementations 
 #Create a new restaurant
-@main.route('/restaurant/new/', methods=['GET','POST'])
+@main.route('/restaurant/new/', methods=['GET', 'POST'])
 def newRestaurant():
   if request.method == 'POST':
-      #using the escape function to prevent possible xss by escaping special characters 
-      name = escape(request.form['name']) 
-      newRestaurant = Restaurant(name=name)
+      newRestaurant = Restaurant(name = request.form['name'])   
       db.session.add(newRestaurant)
       flash('New Restaurant %s Successfully Created' % newRestaurant.name)
       db.session.commit()
       return redirect(url_for('main.showRestaurants'))
-  
-
-
   else:
       return render_template('newRestaurant.html')
+
 
 # Security for input sanitisation + error caused by changes  that i couldn't fix without the db.commit
 @main.route('/restaurant/<int:restaurant_id>/edit/', methods=['GET', 'POST'])
@@ -87,7 +94,7 @@ def newMenuItem(restaurant_id):
   restaurant = db.session.query(Restaurant).filter_by(id = restaurant_id).one()
   if request.method == 'POST':
       #implemented input sanitsation again
-      newItem = MenuItem(name = escape(request.form['name']), description = sanitise_input(request.form['description']), price = escape(request.form['price']), course = escape(request.form['course']), restaurant_id = restaurant_id)
+      newItem = MenuItem(name = escape(request.form['name']), description = sanitise_input(request.form['description']), price = "$"+escape(request.form['price']), course = escape(request.form['course']), restaurant_id = restaurant_id)
       db.session.add(newItem)
       db.session.commit()
       flash('New Menu %s Item Successfully Created' % (newItem.name))
@@ -135,56 +142,8 @@ def deleteMenuItem(restaurant_id, menu_id):
     return render_template('deleteMenuItem.html', item=itemToDelete, restaurant=restaurant)
 
 
-@main.route('/register', methods=['GET', 'POST'])
-def register():
-    form = User.RegistrationForm()  # Create an instance of the RegistrationForm
 
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-        confirm_password = request.form['confirm_password']
 
-        # Validate the form data
-        if password != confirm_password:
-            flash('Passwords do not match. Please try again.')
-            return redirect(url_for('main.register'))
-
-        # Check if username already exists
-        existing_user = User.query.filter_by(username=username).first()
-        if existing_user:
-            flash('Username already exists. Please choose a different username.')
-            return redirect(url_for('main.register'))
-
-        new_user = User(username=username, role='Public User')
-        new_user.set_password(password)
-        db.session.add(new_user)
-        db.session.commit()
-
-        flash('Registration successful. You can now log in.')
-        return redirect(url_for('main.login'))
-    else:
-        return render_template('register.html', form=form)
-
-@main.route('/login', methods=['GET', 'POST'])
-def login():
-    form = User.LoginForm()  # Create an instance of the LoginForm
-
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-
-        user = User.query.filter_by(username=username).first()
-        if not user or not user.check_password(password):
-            flash('Invalid username or password.')
-            return redirect(url_for('main.login'))
-
-        # Store user ID in the session to maintain the session
-        session['user_id'] = user.id
-
-        flash('Logged in successfully.')
-        return redirect(url_for('main.showRestaurants'))
-    else:
-        return render_template('login.html', form=form)
 
 @main.route('/admin/restaurant-owner/new', methods=['GET', 'POST'])
 def newRestaurantOwner():
@@ -199,3 +158,21 @@ def newRestaurantOwner():
 
     # Render the appropriate template or redirect as needed
     return render_template('new_restaurant_owner.html')
+
+
+#Create search bar
+@main.route('/search', methods=["POST"])
+def search():
+   form = SearchForm()
+   items = MenuItem.query
+   if form.validate_on_submit(): 
+      #Recieve input from submitted search
+      text_searched = sanitise_input(form.searched.data)
+      #Query the Database
+      items = items.filter(MenuItem.name.like('%' + text_searched + '%'))
+      #items = items.order_by(MenuItem).all()
+        
+      return render_template("searchbar.html",
+        form = form,
+        searched = text_searched,
+        items = items)

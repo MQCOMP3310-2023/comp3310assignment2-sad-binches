@@ -5,11 +5,24 @@
 <div class="row divider green">
 	<div class="col-md-12"></div>
 </div>
+<div class = 'flash'>
+	{% with messages = get_flashed_messages() %}
+{% if messages %}
+
+<ul>
+{% for message in messages %}
+  <li> <strong> {{ message }} </strong> </li>
+{% endfor %}
+</ul>
+{% endif %}
+{% endwith %}
+
+</div>
 
 <div class="row">
 	<div class="col-md-4 col-md-offset-4">
 		<h2>Login</h2>
-		<form method="POST" action="{{ url_for('main.login') }}">
+		<form method="POST" action="{{ url_for('auth.login') }}">
 			{{ form.csrf_token }}
 			<div class="form-group">
 				<label for="username">Username</label>
@@ -21,7 +34,7 @@
 			</div>
 			<button type="submit" class="btn btn-primary">Login</button>
 		</form>
-		<p>Don't have an account? <a href="{{ url_for('main.register') }}">Register here</a>.</p>
+		<p>Don't have an account? <a href="{{ url_for('auth.register') }}">Register here</a>.</p>
 	</div>
 </div>
 
