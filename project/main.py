@@ -41,9 +41,9 @@ def showRestaurants():
 @login_required 
 def newRestaurant():
   if request.method == 'POST':
-      newRestaurant = Restaurant(name = request.form['name'])   
+      newRestaurant = Restaurant(name = sanitise_input(request.form['name']), ownerid = current_user.id)   
       db.session.add(newRestaurant)
-      flash('New Restaurant %s Successfully Created' % newRestaurant.name)
+      flash('Hi %s, You\'ve successfully created the New Restaurant %s' % (current_user.username, newRestaurant.name))
       db.session.commit()
       return redirect(url_for('main.showRestaurants'))
   else:
@@ -52,31 +52,43 @@ def newRestaurant():
 
 # Security for input sanitisation + error caused by changes  that i couldn't fix without the db.commit
 @main.route('/restaurant/<int:restaurant_id>/edit/', methods=['GET', 'POST'])
+@login_required
 def editRestaurant(restaurant_id):
     editedRestaurant = db.session.query(Restaurant).filter_by(id=restaurant_id).one()
-    if request.method == 'POST':
-        if request.form['name']:
-            print("Old Name:", editedRestaurant.name)
-            editedRestaurant.name = escape(request.form['name'])
-            print("New Name:", editedRestaurant.name)
-            flash('Restaurant Successfully Edited %s' % editedRestaurant.name)
-            db.session.commit()
-            return redirect(url_for('main.showRestaurants'))
-    else:
-        return render_template('editRestaurant.html', restaurant=editedRestaurant)
-
+    items = db.session.query(MenuItem).filter_by(restaurant_id = restaurant_id).all()
+    if editedRestaurant.ownerid == current_user.id or current_user.role == 'admin':
+        if request.method == 'POST':
+            if request.form['name']:
+                print("Old Name:", editedRestaurant.name)
+                editedRestaurant.name = escape(request.form['name'])
+                print("New Name:", editedRestaurant.name)
+                flash('Restaurant Successfully Edited %s' % editedRestaurant.name)
+                db.session.commit()
+                return redirect(url_for('main.showRestaurants'))
+        else:
+            return render_template('editRestaurant.html', restaurant=editedRestaurant)
+    else: 
+        flash('Sorry  %s You do not have permission to delete  %s' % (current_user.username, editedRestaurant.name))
+        return render_template('menu.html',items =items, restaurant = editedRestaurant)
 
 @main.route('/restaurant/<int:restaurant_id>/delete/', methods=['GET', 'POST'])
+@login_required
 def deleteRestaurant(restaurant_id):
     restaurantToDelete = db.session.query(Restaurant).filter_by(id=restaurant_id).one()
-    if request.method == 'POST':
-        if 'delete' in request.form:
-            db.session.delete(restaurantToDelete)
-            flash('%s Successfully Deleted' % restaurantToDelete.name)
-            db.session.commit()
-        return redirect(url_for('main.showRestaurants'))
-    else:
-        return render_template('deleteRestaurant.html', restaurant=restaurantToDelete)
+    items = db.session.query(MenuItem).filter_by(restaurant_id = restaurant_id).all()
+    if restaurantToDelete.ownerid == current_user.id or current_user.role == 'admin':
+        if request.method == 'POST':
+            if 'delete' in request.form:
+                db.session.delete(restaurantToDelete)
+                flash('%s Successfully Deleted' % restaurantToDelete.name)
+                db.session.commit()
+            return redirect(url_for('main.showRestaurants'))
+        else:
+            return render_template('deleteRestaurant.html', restaurant=restaurantToDelete)
+    else: 
+      flash('Sorry  %s You do not have permission to delete  %s' % (current_user.username, restaurantToDelete.name))
+      return render_template('menu.html',items =items, restaurant = restaurantToDelete)
+    
 
 
 #Show a restaurant menu
@@ -91,56 +103,72 @@ def showMenu(restaurant_id):
 
 #Create a new menu item
 @main.route('/restaurant/<int:restaurant_id>/menu/new/',methods=['GET','POST'])
+@login_required
 def newMenuItem(restaurant_id):
   restaurant = db.session.query(Restaurant).filter_by(id = restaurant_id).one()
-  if request.method == 'POST':
-      #implemented input sanitsation again
-      newItem = MenuItem(name = escape(request.form['name']), description = sanitise_input(request.form['description']), price = "$"+escape(request.form['price']), course = escape(request.form['course']), restaurant_id = restaurant_id)
-      db.session.add(newItem)
-      db.session.commit()
-      flash('New Menu %s Item Successfully Created' % (newItem.name))
-      return redirect(url_for('main.showMenu', restaurant_id = restaurant_id))
-  else:
-      return render_template('newmenuitem.html', restaurant_id = restaurant_id)
+  items = db.session.query(MenuItem).filter_by(restaurant_id = restaurant_id).all()
+  if restaurant.ownerid == current_user.id or current_user.role == 'admin':
+    if request.method == 'POST':
+        #implemented input sanitsation again
+        newItem = MenuItem(name = escape(request.form['name']), description = sanitise_input(request.form['description']), price = "$"+escape(request.form['price']), course = escape(request.form['course']), restaurant_id = restaurant_id)
+        db.session.add(newItem)
+        db.session.commit()
+        flash('New Menu %s Item Successfully Created' % (newItem.name))
+        return redirect(url_for('main.showMenu', restaurant_id = restaurant_id))
+    else:
+        return render_template('newmenuitem.html', restaurant_id = restaurant_id)
+  else: 
+      flash('Sorry  %s You do not have permission to add a menu item to  %s' % (current_user.username, restaurant.name))
+      return render_template('menu.html',items =items, restaurant = restaurant)
 
 #Edit a menu item
 @main.route('/restaurant/<int:restaurant_id>/menu/<int:menu_id>/edit', methods=['GET','POST'])
+@login_required
 def editMenuItem(restaurant_id, menu_id):
-
+    items = db.session.query(MenuItem).filter_by(restaurant_id = restaurant_id).all()
     editedItem = db.session.query(MenuItem).filter_by(id = menu_id).one()
     restaurant = db.session.query(Restaurant).filter_by(id = restaurant_id).one()
-    if request.method == 'POST':
-        #implemented input sanitsation again
-        if request.form['name']:
-            editedItem.name = escape(request.form['name'])
-        if request.form['description']:
-            editedItem.description = sanitise_input(request.form['description']) # no special characters needed so used custom function to keep it alpha numeric
-        if request.form['price']:
-            editedItem.price = escape(request.form['price'])
-        if request.form['course']:
-            editedItem.course = escape(request.form['course'])
-        db.session.add(editedItem)
-        db.session.commit() 
-        flash('Menu Item Successfully Edited')
-        return redirect(url_for('main.showMenu', restaurant_id = restaurant_id))
-    else:
-        return render_template('editmenuitem.html', restaurant_id = restaurant_id, menu_id = menu_id, item = editedItem)
-
+    if restaurant.ownerid == current_user.id or current_user.role == 'admin':
+        if request.method == 'POST':
+            #implemented input sanitsation again
+            if request.form['name']:
+                editedItem.name = escape(request.form['name'])
+            if request.form['description']:
+                editedItem.description = sanitise_input(request.form['description']) # no special characters needed so used custom function to keep it alpha numeric
+            if request.form['price']:
+                editedItem.price = escape(request.form['price'])
+            if request.form['course']:
+                editedItem.course = escape(request.form['course'])
+            db.session.add(editedItem)
+            db.session.commit() 
+            flash('Menu Item Successfully Edited')
+            return redirect(url_for('main.showMenu', restaurant_id = restaurant_id))
+        else:
+            return render_template('editmenuitem.html', restaurant_id = restaurant_id, menu_id = menu_id, item = editedItem)
+    else: 
+        flash('Sorry  %s You do not have permission to edit a menu item in   %s' % (current_user.username, restaurant.name))
+        return render_template('menu.html',items =items, restaurant = restaurant)
 
 #Delete a menu item
 @main.route('/restaurant/<int:restaurant_id>/menu/<int:menu_id>/delete', methods=['GET', 'POST'])
+@login_required
 def deleteMenuItem(restaurant_id, menu_id):
     restaurant = db.session.query(Restaurant).filter_by(id=restaurant_id).one()
     itemToDelete = db.session.query(MenuItem).filter_by(id=menu_id).one()
+    items = db.session.query(MenuItem).filter_by(restaurant_id = restaurant_id).all()
+    if restaurant.ownerid == current_user.id or current_user.role == 'admin':
     
-    if request.method == 'POST':
-        if 'delete' in request.form:
-            db.session.delete(itemToDelete)
-            db.session.commit()
-            flash('Menu Item Successfully Deleted')
-        return redirect(url_for('main.showMenu', restaurant_id=restaurant_id))
+        if request.method == 'POST':
+            if 'delete' in request.form:
+                db.session.delete(itemToDelete)
+                db.session.commit()
+                flash('Menu Item Successfully Deleted')
+            return redirect(url_for('main.showMenu', restaurant_id=restaurant_id))
+        return render_template('deleteMenuItem.html', item=itemToDelete, restaurant=restaurant)
+    else: 
+        flash('Sorry  %s You do not have permission to delete a menu item in  %s' % (current_user.username, restaurant.name))
+        return render_template('menu.html',items =items, restaurant = restaurant)
     
-    return render_template('deleteMenuItem.html', item=itemToDelete, restaurant=restaurant)
 
 
 
