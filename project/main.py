@@ -1,5 +1,5 @@
 from flask import Blueprint, app, render_template, request, flash, redirect, url_for, session, abort
-from .models import Restaurant, MenuItem, User
+from .models import Restaurant, MenuItem, User, SearchForm
 from sqlalchemy import asc
 from . import db
 from flask_wtf import FlaskForm
@@ -9,6 +9,11 @@ from flask_wtf.csrf import CSRFProtect
 import re
 from markupsafe import escape
 
+from flask import Blueprint, render_template, request, flash, redirect, url_for
+from .models import Restaurant, MenuItem, SearchForm
+from sqlalchemy import asc
+from . import db
+import re
 
 main = Blueprint('main', __name__)
 csrf = CSRFProtect()
@@ -17,6 +22,11 @@ csrf = CSRFProtect()
 def sanitise_input(input_string):
     sanitised_string = re.sub(r'[^a-zA-Z0-9]', '', input_string)
     return sanitised_string
+
+@main.context_processor
+def base():
+    form = SearchForm()
+    return dict(form=form)
 
 #Show all restaurants
 @main.route('/')
@@ -29,12 +39,23 @@ def showRestaurants():
 #Create a new restaurant
 @main.route('/restaurant/new/', methods=['GET', 'POST'])
 def newRestaurant():
-    if request.method == 'POST':
-        name = escape(request.form['name'])
-        newRestaurant = Restaurant(name=name)
-        db.session.add(newRestaurant)
-        flash('New Restaurant %s Successfully Created' % newRestaurant.name)
-        db.session.commit()
+  if request.method == 'POST':
+      newRestaurant = Restaurant(name = request.form['name'])   
+      db.session.add(newRestaurant)
+      flash('New Restaurant %s Successfully Created' % newRestaurant.name)
+      db.session.commit()
+      return redirect(url_for('main.showRestaurants'))
+  else:
+      return render_template('newRestaurant.html')
+
+#Edit a restaurant
+@main.route('/restaurant/<int:restaurant_id>/edit/', methods = ['GET', 'POST'])
+def editRestaurant(restaurant_id):
+  editedRestaurant = db.session.query(Restaurant).filter_by(id = restaurant_id).one()
+  if request.method == 'POST':
+      if request.form['name']:
+        editedRestaurant.name = request.form['name']
+        flash('Restaurant Successfully Edited %s' % editedRestaurant.name)
         return redirect(url_for('main.showRestaurants'))
     else:
         return render_template('newRestaurant.html')
@@ -150,10 +171,19 @@ def newRestaurantOwner():
     return render_template('new_restaurant_owner.html')
 
 
-
-
-
-
-
-
-
+#Create search bar
+@main.route('/search', methods=["POST"])
+def search():
+   form = SearchForm()
+   items = MenuItem.query
+   if form.validate_on_submit(): 
+      #Recieve input from submitted search
+      text_searched = sanitise_input(form.searched.data)
+      #Query the Database
+      items = items.filter(MenuItem.name.like('%' + text_searched + '%'))
+      #items = items.order_by(MenuItem).all()
+        
+      return render_template("searchbar.html",
+        form = form,
+        searched = text_searched,
+        items = items)
