@@ -8,7 +8,7 @@ from wtforms.validators import DataRequired
 from flask_wtf.csrf import CSRFProtect
 import re
 from markupsafe import escape
-
+from flask_login import login_user, login_required, logout_user, current_user
 from flask import Blueprint, render_template, request, flash, redirect, url_for
 from .models import Restaurant, MenuItem, SearchForm
 from sqlalchemy import asc
@@ -38,6 +38,7 @@ def showRestaurants():
 #Fixed the below code that broke during other implementations 
 #Create a new restaurant
 @main.route('/restaurant/new/', methods=['GET', 'POST'])
+@login_required 
 def newRestaurant():
   if request.method == 'POST':
       newRestaurant = Restaurant(name = request.form['name'])   
