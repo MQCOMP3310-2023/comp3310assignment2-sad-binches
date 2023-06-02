@@ -23,6 +23,41 @@
 	<div class="col-md-4 col-md-offset-4">
 		<h2>Login</h2>
 			gaming
+        
+            <div class="row">
+                <div class="col-md-1"></div>
+                <div class="col-md-3">
+                    <h2>Appetizers</h2>
+                        {% for i in Users %}
+                                <div class="User">
+                                    <h3>{{i.username}}</h3>
+                                    <p>{{i.role}}</p>
+                                    <p class="menu-price">{{i.price}}</p>
+                                </div>
+                        {% endfor %}
+                </div>
+                </div>
+                <div class="col-md-1"></div>
+            </div>
+     
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+            
 			
 		<p>Don't have an account? <a href="{{ url_for('auth.register') }}">Register here</a>.</p>
 	</div>

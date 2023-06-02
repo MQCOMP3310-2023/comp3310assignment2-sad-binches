@@ -193,9 +193,12 @@ def newRestaurantOwner():
 #start of admin panel 
 @main.route('/admin')
 @login_required
+
 def admin():
    if current_user.role == 'admin' :  
-    return render_template('admin.html')
+    Users = db.session.query(User).all()
+                        
+    return render_template('admin.html',Users = Users)
    else: 
         flash('Sorry  %s You do not have permission access this part of the website' % (current_user.username))
         return redirect(url_for('main.showRestaurants'))
