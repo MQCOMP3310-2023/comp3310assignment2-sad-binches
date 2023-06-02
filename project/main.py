@@ -42,30 +42,34 @@ def newRestaurant():
   else:
       return render_template('newRestaurant.html')
 
-#Edit a restaurant
-@main.route('/restaurant/<int:restaurant_id>/edit/', methods = ['GET', 'POST'])
+# Security for input sanitisation + error caused by changes  that i couldn't fix without the db.commit
+@main.route('/restaurant/<int:restaurant_id>/edit/', methods=['GET', 'POST'])
 def editRestaurant(restaurant_id):
-  editedRestaurant = db.session.query(Restaurant).filter_by(id = restaurant_id).one()
-  if request.method == 'POST':
-      if request.form['name']:
-        editedRestaurant.name = request.form['name']
-        flash('Restaurant Successfully Edited %s' % editedRestaurant.name)
-        return redirect(url_for('main.showRestaurants'))
-  else:
-    return render_template('editRestaurant.html', restaurant = editedRestaurant)
+    editedRestaurant = db.session.query(Restaurant).filter_by(id=restaurant_id).one()
+    if request.method == 'POST':
+        if request.form['name']:
+            print("Old Name:", editedRestaurant.name)
+            editedRestaurant.name = escape(request.form['name'])
+            print("New Name:", editedRestaurant.name)
+            flash('Restaurant Successfully Edited %s' % editedRestaurant.name)
+            db.session.commit()
+            return redirect(url_for('main.showRestaurants'))
+    else:
+        return render_template('editRestaurant.html', restaurant=editedRestaurant)
 
 
-#Delete a restaurant
-@main.route('/restaurant/<int:restaurant_id>/delete/', methods = ['GET','POST'])
+@main.route('/restaurant/<int:restaurant_id>/delete/', methods=['GET', 'POST'])
 def deleteRestaurant(restaurant_id):
-  restaurantToDelete = db.session.query(Restaurant).filter_by(id = restaurant_id).one()
-  if request.method == 'POST':
-    db.session.delete(restaurantToDelete)
-    flash('%s Successfully Deleted' % restaurantToDelete.name)
-    db.session.commit()
-    return redirect(url_for('main.showRestaurants', restaurant_id = restaurant_id))
-  else:
-    return render_template('deleteRestaurant.html',restaurant = restaurantToDelete)
+    restaurantToDelete = db.session.query(Restaurant).filter_by(id=restaurant_id).one()
+    if request.method == 'POST':
+        if 'delete' in request.form:
+            db.session.delete(restaurantToDelete)
+            flash('%s Successfully Deleted' % restaurantToDelete.name)
+            db.session.commit()
+        return redirect(url_for('main.showRestaurants'))
+    else:
+        return render_template('deleteRestaurant.html', restaurant=restaurantToDelete)
+
 
 #Show a restaurant menu
 @main.route('/restaurant/<int:restaurant_id>/')
@@ -116,17 +120,20 @@ def editMenuItem(restaurant_id, menu_id):
 
 
 #Delete a menu item
-@main.route('/restaurant/<int:restaurant_id>/menu/<int:menu_id>/delete', methods = ['GET','POST'])
-def deleteMenuItem(restaurant_id,menu_id):
-    restaurant = db.session.query(Restaurant).filter_by(id = restaurant_id).one()
-    itemToDelete = db.session.query(MenuItem).filter_by(id = menu_id).one() 
+@main.route('/restaurant/<int:restaurant_id>/menu/<int:menu_id>/delete', methods=['GET', 'POST'])
+def deleteMenuItem(restaurant_id, menu_id):
+    restaurant = db.session.query(Restaurant).filter_by(id=restaurant_id).one()
+    itemToDelete = db.session.query(MenuItem).filter_by(id=menu_id).one()
+    
     if request.method == 'POST':
-        db.session.delete(itemToDelete)
-        db.session.commit()
-        flash('Menu Item Successfully Deleted')
-        return redirect(url_for('main.showMenu', restaurant_id = restaurant_id))
-    else:
-        return render_template('deleteMenuItem.html', item = itemToDelete)
+        if 'delete' in request.form:
+            db.session.delete(itemToDelete)
+            db.session.commit()
+            flash('Menu Item Successfully Deleted')
+        return redirect(url_for('main.showMenu', restaurant_id=restaurant_id))
+    
+    return render_template('deleteMenuItem.html', item=itemToDelete, restaurant=restaurant)
+
 
 @main.route('/register', methods=['GET', 'POST'])
 def register():
