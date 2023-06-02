@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, request, flash, redirect, url_for
 from .models import Restaurant, MenuItem, SearchForm
 from sqlalchemy import asc
 from . import db
+import re
 
 main = Blueprint('main', __name__)
 
@@ -113,6 +114,11 @@ def deleteMenuItem(restaurant_id,menu_id):
     else:
         return render_template('deleteMenuItem.html', item = itemToDelete)
 
+#input sanitisation code to prevent injection sequences 
+def sanitise_input(input_string):
+    sanitised_string = re.sub(r'[^a-zA-Z0-9]', '', input_string)
+    return sanitised_string
+
 #Create search bar
 @main.route('/search', methods=["POST"])
 def search():
@@ -120,7 +126,7 @@ def search():
    items = MenuItem.query
    if form.validate_on_submit(): 
       #Recieve input from submitted search
-      text_searched = form.searched.data
+      text_searched = sanitise_input(form.searched.data)
       #Query the Database
       items = items.filter(MenuItem.name.like('%' + text_searched + '%'))
       #items = items.order_by(MenuItem).all()
