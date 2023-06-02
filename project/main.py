@@ -105,7 +105,7 @@ def editMenuItem(restaurant_id, menu_id):
         if request.form['description']:
             editedItem.description = sanitise_input(request.form['description']) # no special characters needed so used custom function to keep it alpha numeric
         if request.form['price']:
-            editedItem.price = "$"+escape(request.form['price'])
+            editedItem.price = escape(request.form['price'])
         if request.form['course']:
             editedItem.course = escape(request.form['course'])
         db.session.add(editedItem)
