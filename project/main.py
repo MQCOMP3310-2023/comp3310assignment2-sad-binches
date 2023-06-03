@@ -1,5 +1,5 @@
 from flask import Blueprint, app, render_template, request, flash, redirect, url_for, session, abort
-from .models import Restaurant, MenuItem, User, SearchForm
+from .models import Restaurant, MenuItem, User, SearchForm , Rating
 from sqlalchemy import asc
 from . import db
 from flask_wtf import FlaskForm
@@ -29,12 +29,21 @@ def base():
     form = SearchForm()
     return dict(form=form)
 
-#Show all restaurants
 @main.route('/')
 @main.route('/restaurant/')
 def showRestaurants():
-  restaurants = db.session.query(Restaurant).order_by(asc(Restaurant.name))
-  return render_template('restaurants.html', restaurants = restaurants)
+    restaurants = Restaurant.query.order_by(Restaurant.name.asc())
+
+    # Calculate average ratings for each restaurant
+    average_ratings = {}
+    for restaurant in restaurants:
+        ratings = Rating.query.filter_by(restaurant_id=restaurant.id).all()
+        average_rating = sum(rating.rating for rating in ratings) / len(ratings) if ratings else 0
+        average_ratings[restaurant.id] = average_rating
+
+    return render_template('restaurants.html', restaurants=restaurants, average_ratings=average_ratings, ratings=ratings)
+
+
 
 #Fixed the below code that broke during other implementations 
 #Create a new restaurant
@@ -97,14 +106,13 @@ def deleteRestaurant(restaurant_id):
     
 
 
-#Show a restaurant menu
-@main.route('/restaurant/<int:restaurant_id>/')
-@main.route('/restaurant/<int:restaurant_id>/menu/')
+# Show a restaurant menu
+@main.route('/restaurant/<int:restaurant_id>/menu', methods=['GET'])
 def showMenu(restaurant_id):
-    restaurant = db.session.query(Restaurant).filter_by(id = restaurant_id).one()
-    items = db.session.query(MenuItem).filter_by(restaurant_id = restaurant_id).all()
-    return render_template('menu.html', items = items, restaurant = restaurant)
-     
+    restaurant = db.session.query(Restaurant).filter_by(id=restaurant_id).one()
+    items = db.session.query(MenuItem).filter_by(restaurant_id=restaurant_id).all()
+    return render_template('menu.html', items=items, restaurant=restaurant)
+
 
 
 #Create a new menu item
@@ -177,25 +185,6 @@ def deleteMenuItem(restaurant_id, menu_id):
     
 
 
-
-
-
-@main.route('/admin/restaurant-owner/new', methods=['GET', 'POST'])
-def newRestaurantOwner():
-    if 'user_id' not in session:
-        abort(401)  # Unauthorized access
-
-    user = User.query.get(session['user_id'])
-    if user.role != 'Administrator':
-        abort(403)  # Access forbidden for non-administrators
-
-    # Rest of the code for adding a new restaurant owner
-
-    # Render the appropriate template or redirect as needed
-    return render_template('new_restaurant_owner.html')
-
-
-
 #start of admin panel 
 @main.route('/admin')
 @login_required
@@ -247,7 +236,7 @@ def edit_user(user_id):
 
     return render_template('edituser.html', form=form, user=user)
 
-
+#admin panel delete user
 @main.route('/admin/deleteuser/<int:user_id>', methods=['POST'])
 @login_required
 def delete_user(user_id):
@@ -272,6 +261,7 @@ def delete_user(user_id):
     flash('User has been deleted successfully.', 'success')
     return redirect(url_for('main.admin'))
 
+#admin panel for editing restaurant
 @main.route('/admin/editrestaurant/<int:restaurant_id>', methods=['GET', 'POST'])
 @login_required
 def edit_restaurant_owner(restaurant_id):
@@ -313,6 +303,57 @@ def delete_restaurant(restaurant_id):
     db.session.commit()
     flash('Restaurant %s has been deleted successfully.' % restaurant.name, 'success')
     return redirect(url_for('main.admin'))
+
+
+class RatingForm(FlaskForm):
+    rating = SelectField('Rating', choices=[('1', '1'), ('2', '2'), ('3', '3'), ('4', '4'), ('5', '5')],
+                         validators=[DataRequired()])
+    submit = SubmitField('Submit')
+
+
+
+@main.route('/restaurant/<int:restaurant_id>/ratings', methods=['GET', 'POST'])
+@login_required
+def showRatings(restaurant_id):
+    restaurant = db.session.query(Restaurant).filter_by(id=restaurant_id).one()
+    ratings = Rating.query.filter_by(restaurant_id=restaurant_id).all()
+
+    # Check if the user has already rated the restaurant
+    user_rating = Rating.query.filter_by(restaurant_id=restaurant_id, user_id=current_user.id).first()
+
+    if current_user.id != restaurant.ownerid:
+        if request.method == 'POST':
+            rating = int(request.form['rating'])
+
+            if user_rating:
+                # User has already rated the restaurant, update the existing rating
+                user_rating.rating = rating
+            else:
+                # User has not rated the restaurant, create a new rating object
+                new_rating = Rating(restaurant_id=restaurant_id, user_id=current_user.id, rating=rating)
+                db.session.add(new_rating)
+
+            db.session.commit()
+
+            return redirect(url_for('main.showRatings', restaurant_id=restaurant_id))
+
+    return render_template('ratings.html', restaurant=restaurant, ratings=ratings, user_rating=user_rating)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

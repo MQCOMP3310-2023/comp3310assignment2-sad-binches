@@ -81,8 +81,27 @@ class MenuItem(db.Model):
             'course'     : self.course,
         }
 
+class Rating(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    restaurant_id = db.Column(db.Integer, db.ForeignKey('restaurant.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    rating = db.Column(db.Integer, nullable=False)
 
+    user = db.relationship('User', backref='ratings')
 
+    @property
+    def serialize(self):
+        """Return object data in easily serializable format"""
+        return {
+            'id': self.id,
+            'restaurant_id': self.restaurant_id,
+            'user_id': self.user_id,
+            'rating': self.rating,
+        }
+
+    @property
+    def username(self):
+        return self.user.username
 
 class SearchForm(FlaskForm):
     searched = StringField("Searched", validators=[DataRequired()])
