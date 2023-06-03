@@ -40,6 +40,12 @@ def register():
         if existing_user:
             flash('Username already exists. Please choose a different username.')
             return redirect(url_for('auth.register'))
+        
+        # Check for special characters in the username
+        special_char_pattern = r'[!@#$%^&*(),.?":{}|<>]'
+        if re.search(special_char_pattern, username):
+            flash('Username contains invalid characters. Please choose a different username.')
+            return redirect(url_for('auth.register'))
 
         new_user = User(username=username, role='Public User')
         new_user.set_password(password)
