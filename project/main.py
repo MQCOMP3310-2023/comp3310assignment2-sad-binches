@@ -74,8 +74,7 @@ def newRestaurant():
             current_user.role = 'owner'
             db.session.commit()
 
-        logging.info('Restaurant created by %s (ID: %s): %s' % (current_user.username, current_user.id, newRestaurant.name))
-
+        logger.info('Restaurant created by %s (ID: %s): %s' % (current_user.username, current_user.id, newRestaurant.name))
 
         flash('Hi %s, You\'ve successfully created the New Restaurant %s' % (current_user.username, newRestaurant.name))
         return redirect(url_for('main.showRestaurants'))
@@ -97,13 +96,14 @@ def editRestaurant(restaurant_id):
                 print("New Name:", editedRestaurant.name)
                 flash('Restaurant Successfully Edited %s' % editedRestaurant.name)
                 
-                logging.info('Restaurant edited by %s (ID: %s): %s' % (current_user.username, current_user.id, editedRestaurant.name))
+                logger.info('Restaurant edited by %s (ID: %s): %s' % (current_user.username, current_user.id, editedRestaurant.name))
                 db.session.commit()
                 return redirect(url_for('main.showRestaurants'))
         else:
             return render_template('editRestaurant.html', restaurant=editedRestaurant)
         
     else: 
+        logger.info('Failed attempt to edit restaurant by %s (ID: %s): %s' % (current_user.username, current_user.id, editedRestaurant.name))
         flash('Sorry  %s You do not have permission to delete  %s' % (current_user.username, editedRestaurant.name))
         return render_template('menu.html',items =items, restaurant = editedRestaurant)
 
@@ -117,12 +117,13 @@ def deleteRestaurant(restaurant_id):
             if 'delete' in request.form:
                 db.session.delete(restaurantToDelete)
                 flash('%s Successfully Deleted' % restaurantToDelete.name)
-                logging.info('Restaurant deleted by %s (ID: %s): %s' % (current_user.username, current_user.id, restaurantToDelete.name))
+                logger.info('Restaurant deleted by %s (ID: %s): %s' % (current_user.username, current_user.id, restaurant_id))
                 db.session.commit()               
             return redirect(url_for('main.showRestaurants'))
         else:
             return render_template('deleteRestaurant.html', restaurant=restaurantToDelete)
     else: 
+        logger.info('Failed attempt to delete restaurant by %s (ID: %s): %s' % (current_user.username, current_user.id, restaurant_id))
         flash('Sorry  %s You do not have permission to delete  %s' % (current_user.username, restaurantToDelete.name))
         return render_template('menu.html',items =items, restaurant = restaurantToDelete)
     
@@ -148,12 +149,14 @@ def newMenuItem(restaurant_id):
         #implemented input sanitsation again
         newItem = MenuItem(name = escape(request.form['name']), description = sanitise_input(request.form['description']), price = "$"+escape(request.form['price']), course = escape(request.form['course']), restaurant_id = restaurant_id)
         db.session.add(newItem)
+        logger.info('Menu Item created by %s (ID: %s): %s' % (current_user.username, current_user.id, newItem.name))
         db.session.commit()
         flash('New Menu %s Item Successfully Created' % (newItem.name))
         return redirect(url_for('main.showMenu', restaurant_id = restaurant_id))
     else:
         return render_template('newmenuitem.html', restaurant_id = restaurant_id)
   else: 
+      logger.info('Failed attempt to create menu item  by %s (ID: %s): %s' % (current_user.username, current_user.id))
       flash('Sorry  %s You do not have permission to add a menu item to  %s' % (current_user.username, restaurant.name))
       return render_template('menu.html',items =items, restaurant = restaurant)
 
@@ -169,12 +172,16 @@ def editMenuItem(restaurant_id, menu_id):
             #implemented input sanitsation again
             if request.form['name']:
                 editedItem.name = escape(request.form['name'])
+                logger.info('Menu item name edited by %s (ID: %s): %s' % (current_user.username, current_user.id, editedItem.name))
             if request.form['description']:
                 editedItem.description = sanitise_input(request.form['description']) # no special characters needed so used custom function to keep it alpha numeric
+                logger.info('Menu item description edited by %s (ID: %s): %s' % (current_user.username, current_user.id, editedItem.description))
             if request.form['price']:
                 editedItem.price = escape(request.form['price'])
+                logger.info('Menu item price edited by %s (ID: %s): %s' % (current_user.username, current_user.id, editedItem.price))
             if request.form['course']:
                 editedItem.course = escape(request.form['course'])
+                logger.info('Menu item course edited by %s (ID: %s): %s' % (current_user.username, current_user.id, editedItem.course))
             db.session.add(editedItem)
             db.session.commit() 
             flash('Menu Item Successfully Edited')
@@ -182,6 +189,7 @@ def editMenuItem(restaurant_id, menu_id):
         else:
             return render_template('editmenuitem.html', restaurant_id = restaurant_id, menu_id = menu_id, item = editedItem)
     else: 
+        logger.info('Failed attempt to edit menu item  by %s (ID: %s): %s' % (current_user.username, current_user.id, ''))
         flash('Sorry  %s You do not have permission to edit a menu item in   %s' % (current_user.username, restaurant.name))
         return render_template('menu.html',items =items, restaurant = restaurant)
 
@@ -197,11 +205,13 @@ def deleteMenuItem(restaurant_id, menu_id):
         if request.method == 'POST':
             if 'delete' in request.form:
                 db.session.delete(itemToDelete)
+                logger.info('Menu item deleted by %s (ID: %s): %s' % (current_user.username, current_user.id, itemToDelete.name))
                 db.session.commit()
                 flash('Menu Item Successfully Deleted')
             return redirect(url_for('main.showMenu', restaurant_id=restaurant_id))
         return render_template('deleteMenuItem.html', item=itemToDelete, restaurant=restaurant)
     else: 
+        logger.info('Failed attempt to delete menu item by %s (ID: %s): %s' % (current_user.username, current_user.id, itemToDelete.name))
         flash('Sorry  %s You do not have permission to delete a menu item in  %s' % (current_user.username, restaurant.name))
         return render_template('menu.html',items =items, restaurant = restaurant)
     
@@ -212,6 +222,7 @@ def deleteMenuItem(restaurant_id, menu_id):
 @login_required
 def admin():
     if current_user.role != 'admin':
+        logger.info('Failed attempt to access admin panel by %s (ID: %s): %s' % (current_user.username, current_user.id, ''))
         flash('Sorry, %s. You do not have permission to access this part of the website.' % current_user.username, 'error')
         return redirect(url_for('main.showRestaurants'))
 
@@ -239,12 +250,14 @@ class EditRestaurantOwnerForm(FlaskForm):
 @login_required
 def edit_user(user_id):
     if current_user.role != 'admin':
+        logger.info('Failed attempt to edit user roles by %s (ID: %s): %s' % (current_user.username, current_user.id, ''))
         flash('Sorry, %s. You do not have permission to edit user roles.' % current_user.username, 'error')
         return redirect(url_for('main.showRestaurants'))
     
 
     user = User.query.get_or_404(user_id)
     if user.username == 'admin':
+        logger.info('Failed attempt to edit admin user by %s (ID: %s): %s' % (current_user.username, current_user.id, ''))
         flash('Sorry, you cannot edit the role of the admin user.', 'error')
         return redirect(url_for('main.admin'))
     
@@ -252,6 +265,7 @@ def edit_user(user_id):
 
     if form.validate_on_submit():
         user.role = form.role.data
+        logger.info('user role updated by %s (ID: %s): %s' % (current_user.username, current_user.id, user.id))
         db.session.commit()
         flash('User role has been updated successfully.', 'success')
         return redirect(url_for('main.admin'))
@@ -263,11 +277,13 @@ def edit_user(user_id):
 @login_required
 def delete_user(user_id):
     if current_user.role != 'admin':
+        logger.info('Failed attempt to delete user by %s (ID: %s): %s' % (current_user.username, current_user.id, ''))
         flash('Sorry, %s. You do not have permission to delete users.' % current_user.username, 'error')
         return redirect(url_for('main.showRestaurants'))
     
     user = User.query.get_or_404(user_id)
     if user.username == 'admin':
+        logger.info('Failed attempt to delete admin user by %s (ID: %s): %s' % (current_user.username, current_user.id, ''))
         flash('Sorry, you cannot delete the admin user.', 'error')
         return redirect(url_for('main.admin'))
     
@@ -279,6 +295,7 @@ def delete_user(user_id):
         restaurant.ownerid = admin_user.id
 
     db.session.delete(user)
+    logger.info('user deleted by %s (ID: %s): %s' % (current_user.username, current_user.id, user.id))
     db.session.commit()
     flash('User has been deleted successfully.', 'success')
     return redirect(url_for('main.admin'))
@@ -288,6 +305,7 @@ def delete_user(user_id):
 @login_required
 def edit_restaurant_owner(restaurant_id):
     if current_user.role != 'admin':
+        logger.info('Failed attempt to edit restaurant owner by %s (ID: %s): %s' % (current_user.username, current_user.id, ''))
         flash('Sorry, %s. You do not have permission to edit restaurant owners.' % current_user.username, 'error')
         return redirect(url_for('main.admin'))
 
@@ -305,6 +323,7 @@ def edit_restaurant_owner(restaurant_id):
                 flash('Invalid user selected.', 'error')
             else:
                 restaurant.ownerid = new_owner_id
+                logger.info('Restaurant owner updated by %s (ID: %s): %s' % (current_user.username, current_user.id, new_owner_id))
                 db.session.commit()
                 flash('Restaurant owner has been updated successfully.', 'success')
 
@@ -317,11 +336,13 @@ def edit_restaurant_owner(restaurant_id):
 @login_required
 def delete_restaurant(restaurant_id):
     if current_user.role != 'admin':
+        logger.info('Failed attempt to delete restaurant by %s (ID: %s): %s' % (current_user.username, current_user.id, ''))
         flash('Sorry, %s. You do not have permission to delete restaurants.' % current_user.username, 'error')
         return redirect(url_for('main.admin'))
 
     restaurant = Restaurant.query.get_or_404(restaurant_id)
     db.session.delete(restaurant)
+    logger.info('Restaurant deleted by %s (ID: %s): %s' % (current_user.username, current_user.id, ''))
     db.session.commit()
     flash('Restaurant %s has been deleted successfully.' % restaurant.name, 'success')
     return redirect(url_for('main.admin'))
@@ -354,6 +375,7 @@ def showRatings(restaurant_id):
                 # User has not rated the restaurant, create a new rating object
                 new_rating = Rating(restaurant_id=restaurant_id, user_id=current_user.id, rating=rating)
                 db.session.add(new_rating)
+                logger.info('Restaurant rated by %s (ID: %s): %s' % (current_user.username, current_user.id, restaurant_id))
 
             db.session.commit()
 
@@ -379,6 +401,7 @@ def search():
             flash('Please enter valid a search query.', 'warning')
             return redirect(url_for('main.showRestaurants'))
         # Redirect to the search results page
+        logger.info('Search by %s (ID: %s): %s' % (current_user.username, current_user.id, text_searched))
         return redirect(url_for('main.search_results', searched=text_searched))
     
     flash('Please enter a valid search query.', 'warning')

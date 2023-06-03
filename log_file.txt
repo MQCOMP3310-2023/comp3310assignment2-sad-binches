@@ -1,0 +1,6 @@
+2023-06-04 00:04:55,774 - INFO - Restaurant edited by admin (ID: 2): Thyme for That Vegetarian
+2023-06-04 00:33:30,696 - INFO - Restaurant created by admin (ID: 2): hiya
+2023-06-04 00:34:00,216 - INFO - Restaurant deleted by admin (ID: 2): 
+2023-06-04 00:35:23,631 - INFO - Restaurant deleted by admin (ID: 2): 
+2023-06-04 00:35:49,377 - INFO - user role updated by admin (ID: 2): 1
+2023-06-04 00:36:09,092 - INFO - Menu Item created by admin (ID: 2): pij
