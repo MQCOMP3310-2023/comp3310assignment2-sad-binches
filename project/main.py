@@ -1,23 +1,18 @@
-from flask import Blueprint, app, render_template, request, flash, redirect, url_for, session, abort
-from .models import Restaurant, MenuItem, User, SearchForm , Rating
-from sqlalchemy import asc
+from flask import Blueprint, render_template, request, flash, redirect, url_for, session, abort
+from .models import Restaurant, MenuItem, User, SearchForm, Rating
 from . import db
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField
+from wtforms import StringField, PasswordField, SubmitField, SelectField
 from wtforms.validators import DataRequired
 from flask_wtf.csrf import CSRFProtect
-import re
 from markupsafe import escape
 from flask_login import login_user, login_required, logout_user, current_user
-from flask import Blueprint, render_template, request, flash, redirect, url_for
-from .models import Restaurant, MenuItem, SearchForm
 from sqlalchemy import asc
-from . import db
 import re
-from wtforms import SelectField
 
 main = Blueprint('main', __name__)
 csrf = CSRFProtect()
+
 
 #input sanitisation code to prevent injection sequences 
 def sanitise_input(input_string):
@@ -339,41 +334,33 @@ def showRatings(restaurant_id):
 
     return render_template('ratings.html', restaurant=restaurant, ratings=ratings, user_rating=user_rating)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#Create search bar
+#search bar request code
 @main.route('/search', methods=["POST"])
 def search():
-   form = SearchForm()
-   items = MenuItem.query
-   if form.validate_on_submit(): 
-      #Recieve input from submitted search
-      text_searched = sanitise_input(form.searched.data)
-      #Query the Database
-      items = items.filter(MenuItem.name.like('%' + text_searched + '%'))
-      #items = items.order_by(MenuItem).all()
-        
-      return render_template("searchbar.html",
-        form = form,
-        searched = text_searched,
-        items = items)
+    form = SearchForm()
+    items = MenuItem.query
+    restaurants = Restaurant.query
+    if form.validate_on_submit():
+        # Receive input from submitted search
+        text_searched = sanitise_input(form.searched.data)
+        if text_searched:
+            # Query the Database
+            items = items.filter(MenuItem.name.like('%' + text_searched + '%')).all()
+            restaurants = restaurants.filter(Restaurant.name.like('%' + text_searched + '%')).all()
+        else:
+            # Handle blank search query
+            flash('Please enter valid a search query.', 'warning')
+            return redirect(url_for('main.showRestaurants'))
+        # Redirect to the search results page
+        return redirect(url_for('main.search_results', searched=text_searched))
+    
+    flash('Please enter a valid search query.', 'warning')
+    return redirect(url_for('main.showRestaurants'))
+
+
+#search results code 
+@main.route('/search_results/<searched>')
+def search_results(searched):
+    items = MenuItem.query.filter(MenuItem.name.like('%' + searched + '%')).all()
+    restaurants = Restaurant.query.filter(Restaurant.name.like('%' + searched + '%')).all()
+    return render_template("search_results.html", searched=searched, items=items, restaurants=restaurants)

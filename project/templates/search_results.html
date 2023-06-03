@@ -1,0 +1,20 @@
+{% extends "main.html" %}
+{% include "header.html" %}
+
+{% block content %}
+<h2>Search Results for "{{ searched }}"</h2>
+
+{% if items %}
+    {% for item in items %}
+        <div class="result-item">
+            <h3>{{ item.name }}</h3>
+            <p>{{ item.description }}</p>
+            {% if item.restaurant %}
+                <p>Restaurant: <a href="{{ url_for('main.showMenu', restaurant_id=item.restaurant_id) }}">{{ item.restaurant.name }}</a></p>
+            {% endif %}
+        </div>
+    {% endfor %}
+{% else %}
+    <p>No results found.</p>
+{% endif %}
+{% endblock %}

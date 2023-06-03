@@ -12,7 +12,7 @@ def create_app():
 
     app.config['SECRET_KEY'] = 'secret-key-do-not-reveal'
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///restaurantmenu.db'
-
+    
     db.init_app(app)
 
     login_manager = LoginManager()
