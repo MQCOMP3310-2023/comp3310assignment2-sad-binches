@@ -1,25 +1,22 @@
 <div class="row top-menu">
-	<div class="col-md-6">
-		<a href="{{url_for('main.showRestaurants')}}">
-			<span class="glyphicon glyphicon-home" aria-hidden="true"></span>Show All Restaurants
-		</a>
-	</div>
-	<div class="col-md-6 text-right">
-		<form method="POST" action="{{url_for('main.search')}}" class="d-flex">
-			{{form.hidden_tag() }}
-			<input class="form" type="search" placeholder="Search" aria-label="Search" name="searched">
-			<button class="button" type="submit">
-				Search
-			</button>
-		</form>
-		{% if current_user.is_authenticated %}
-		<p>Welcome, {{ current_user.username }}!</p>
-		<a href="{{ url_for('auth.logout') }}">Logout</a>
-	{% else %}
-		<a href="{{ url_for('auth.login') }}">Login</a>
-		<a href="{{ url_for('auth.register') }}">Register</a>
-	{% endif %}
-		
-	</div>
+    <div class="col-md-6">
+        <a href="{{ url_for('main.showRestaurants') }}">
+            <span class="glyphicon glyphicon-home" aria-hidden="true"></span>Show All Restaurants
+        </a>
+    </div>
+    <div class="col-md-6 text-right">
+        <form method="POST" action="{{ url_for('main.search') }}" class="d-flex">
+            {{ form.hidden_tag() }}
+            <input class="form" type="search" placeholder="Search" aria-label="Search" name="searched">
+            <button class="button" type="submit">Search</button>
+        </form>
+        {% if current_user.is_authenticated %}
+            <p>Welcome, {{ current_user.username }}!</p>
+            <a href="{{ url_for('auth.logout') }}">Logout</a>
+        {% else %}
+            <a href="{{ url_for('auth.login') }}">Login</a>
+            <a href="{{ url_for('auth.register') }}">Register</a>
+        {% endif %}
+    </div>
 </div>
 
