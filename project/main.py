@@ -9,10 +9,30 @@ from markupsafe import escape
 from flask_login import login_user, login_required, logout_user, current_user
 from sqlalchemy import asc
 import re
+import logging
+from werkzeug.serving import WSGIRequestHandler
 
 main = Blueprint('main', __name__)
 csrf = CSRFProtect()
 
+WSGIRequestHandler.log = lambda *args, **kwargs: None
+
+# Create a logger and set its level to the desired logging level
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+
+# Create a file handler and set its level to the desired logging level
+file_handler = logging.FileHandler('log_file.txt')
+file_handler.setLevel(logging.INFO)
+
+# Create a formatter for the log messages
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+
+# Set the formatter for the file handler
+file_handler.setFormatter(formatter)
+
+# Add the file handler to the logger
+logger.addHandler(file_handler)
 
 #input sanitisation code to prevent injection sequences 
 def sanitise_input(input_string):
@@ -54,6 +74,9 @@ def newRestaurant():
             current_user.role = 'owner'
             db.session.commit()
 
+        logging.info('Restaurant created by %s (ID: %s): %s' % (current_user.username, current_user.id, newRestaurant.name))
+
+
         flash('Hi %s, You\'ve successfully created the New Restaurant %s' % (current_user.username, newRestaurant.name))
         return redirect(url_for('main.showRestaurants'))
     else:
@@ -73,10 +96,13 @@ def editRestaurant(restaurant_id):
                 editedRestaurant.name = escape(request.form['name'])
                 print("New Name:", editedRestaurant.name)
                 flash('Restaurant Successfully Edited %s' % editedRestaurant.name)
+                
+                logging.info('Restaurant edited by %s (ID: %s): %s' % (current_user.username, current_user.id, editedRestaurant.name))
                 db.session.commit()
                 return redirect(url_for('main.showRestaurants'))
         else:
             return render_template('editRestaurant.html', restaurant=editedRestaurant)
+        
     else: 
         flash('Sorry  %s You do not have permission to delete  %s' % (current_user.username, editedRestaurant.name))
         return render_template('menu.html',items =items, restaurant = editedRestaurant)
@@ -91,13 +117,14 @@ def deleteRestaurant(restaurant_id):
             if 'delete' in request.form:
                 db.session.delete(restaurantToDelete)
                 flash('%s Successfully Deleted' % restaurantToDelete.name)
-                db.session.commit()
+                logging.info('Restaurant deleted by %s (ID: %s): %s' % (current_user.username, current_user.id, restaurantToDelete.name))
+                db.session.commit()               
             return redirect(url_for('main.showRestaurants'))
         else:
             return render_template('deleteRestaurant.html', restaurant=restaurantToDelete)
     else: 
-      flash('Sorry  %s You do not have permission to delete  %s' % (current_user.username, restaurantToDelete.name))
-      return render_template('menu.html',items =items, restaurant = restaurantToDelete)
+        flash('Sorry  %s You do not have permission to delete  %s' % (current_user.username, restaurantToDelete.name))
+        return render_template('menu.html',items =items, restaurant = restaurantToDelete)
     
 
 

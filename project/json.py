@@ -3,6 +3,7 @@ from .models import Restaurant, MenuItem
 from sqlalchemy import text
 from . import db
 import json as pyjs
+import logging
 
 json = Blueprint('json', __name__)
 
