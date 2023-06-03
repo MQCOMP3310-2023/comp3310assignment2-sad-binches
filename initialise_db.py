@@ -1,12 +1,36 @@
 from project import db, create_app, models
 from project.models import Restaurant, MenuItem, User
+from werkzeug.security import generate_password_hash
+from flask_login import UserMixin
+def clear_database():
+    # Delete all MenuItem records
+    MenuItem.query.delete()
+    db.session.commit()
+
+    # Delete all Restaurant records
+    Restaurant.query.delete()
+    db.session.commit()
+
+    # Delete all User records
+    User.query.delete()
+    db.session.commit()
+
 
 def populate_db():
-    #Menu for UrbanBurger
-    restaurant1 = Restaurant(name = "Urban Burger")
-
+    clear_database()
     session = db.session()
+    # Create the owner and admin user
+    owner = User(username="owner", password_hash=generate_password_hash("owner", method='sha256'), role='owner')
+    session.add(owner)
+    session.commit()
+
+    admin = User(username="admin", password_hash=generate_password_hash("admin", method='sha256'), role='admin')
+    session.add(admin)
+    session.commit()
     
+    
+    #Menu for UrbanBurger
+    restaurant1 = Restaurant(name = "Urban Burger", ownerid = owner.id) 
     session.add(restaurant1)
     session.commit()
     
@@ -43,7 +67,7 @@ def populate_db():
     session.commit()
     
     #Menu for Super Stir Fry
-    restaurant2 = Restaurant(name = "Super Stir Fry")
+    restaurant2 = Restaurant(name = "Super Stir Fry", ownerid = owner.id) 
     session.add(restaurant2)
     session.commit()
     
@@ -72,7 +96,7 @@ def populate_db():
     session.commit()
     
     #Menu for Panda Garden
-    restaurant1 = Restaurant(name = "Panda Garden")
+    restaurant1 = Restaurant(name = "Panda Garden", ownerid = owner.id) 
     
     session.add(restaurant1)
     session.commit()
@@ -94,7 +118,7 @@ def populate_db():
     session.commit()
     
     #Menu for Thyme for that
-    restaurant1 = Restaurant(name = "Thyme for That Vegetarian Cuisine ")
+    restaurant1 = Restaurant(name = "Thyme for That Vegetarian Cuisine ", ownerid = owner.id) 
     session.add(restaurant1)
     session.commit()
     
@@ -119,7 +143,7 @@ def populate_db():
     session.commit()
     
     #Menu for Tony's Bistro
-    restaurant1 = Restaurant(name = "Tony\'s Bistro ")
+    restaurant1 = Restaurant(name = "Tony\'s Bistro ", ownerid = owner.id) 
     session.add(restaurant1)
     session.commit()
     
@@ -144,7 +168,7 @@ def populate_db():
     session.commit()
     
     #Menu for Andala's 
-    restaurant1 = Restaurant(name = "Andala\'s")
+    restaurant1 = Restaurant(name = "Andala\'s", ownerid = owner.id) 
     session.add(restaurant1)
     session.commit()
     
@@ -165,7 +189,7 @@ def populate_db():
     session.commit()
     
     #Menu for Auntie Ann's
-    restaurant1 = Restaurant(name = "Auntie Ann\'s Diner ")
+    restaurant1 = Restaurant(name = "Auntie Ann\'s Diner ", ownerid = owner.id) 
     session.add(restaurant1)
     session.commit()
     
@@ -191,7 +215,7 @@ def populate_db():
     session.commit()
     
     #Menu for Cocina Y Amor
-    restaurant1 = Restaurant(name = "Cocina Y Amor ")
+    restaurant1 = Restaurant(name = "Cocina Y Amor ", ownerid = owner.id) 
     session.add(restaurant1)
     session.commit()
     
