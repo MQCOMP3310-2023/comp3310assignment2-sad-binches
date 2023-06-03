@@ -4,3 +4,7 @@
 2023-06-04 00:35:23,631 - INFO - Restaurant deleted by admin (ID: 2): 
 2023-06-04 00:35:49,377 - INFO - user role updated by admin (ID: 2): 1
 2023-06-04 00:36:09,092 - INFO - Menu Item created by admin (ID: 2): pij
+2023-06-04 01:25:14,504 - INFO - New user created newer 
+2023-06-04 01:25:35,697 - INFO - User logged in newer (ID: 6): 
+2023-06-04 01:28:03,588 - INFO - User logged in admin (ID: 2): 
+2023-06-04 01:28:15,480 - INFO - Failed attempt to login to admin (ID: 2):
