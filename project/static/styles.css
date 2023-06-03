@@ -71,6 +71,14 @@ h3 {
 	border-color: #aaaaaa;
 	color: red;
 }
+.non-interactive-block {
+	width: calc(100vw / 6);
+	border: 2px solid; /* Add border styles to the content element */
+	padding: 20px;
+    margin: 0;
+    color: #9FB80A;
+}
+
 .glyphicon {
 	margin-right: 10px;
 }
@@ -119,7 +127,7 @@ h3 {
  .restaurant-list {
  	background-color: #F0F0F0;
  	padding: 20px;
-u }
+}
  .restaurant-list:hover {
  	background-color: #e1e17f;
  	padding: 20px;

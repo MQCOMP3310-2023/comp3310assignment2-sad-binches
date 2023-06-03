@@ -3,11 +3,50 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField
 from wtforms.validators import DataRequired
+from flask_login import UserMixin
+
+class User(UserMixin,db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(50), unique=True, nullable=False)
+    password_hash = db.Column(db.String(128), nullable=False)
+    role = db.Column(db.String(20), nullable=False)
+
+    @property
+    def serialize(self):
+       """Return object data in easily serializeable format"""
+       return {
+           'id'         : self.id,
+           'password'   : self.password_hash,
+           'username'   : self.username,
+           'role'       : self.role
+       }
+
+    class LoginForm(FlaskForm):
+        username = StringField('Username', validators=[DataRequired()])
+        password = StringField('Password', validators=[DataRequired()])
+        submit = SubmitField('Login')
+
+    class RegistrationForm(FlaskForm):
+        username = StringField('Username', validators=[DataRequired()])
+        password = StringField('Password', validators=[DataRequired()])
+        confirm_password = StringField('Confirm Password', validators=[DataRequired()])
+        submit = SubmitField('Register')
+
+    def set_password(self, password):
+        self.password_hash = generate_password_hash(password)
+
+    def check_password(self, password):
+        return check_password_hash(self.password_hash, password)
+    
+
 
 
 class Restaurant(db.Model):
+    user = db.relationship(User)
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(250), nullable=False)
+    ownerid = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+   
 
     # Form fields
     class RestaurantForm(FlaskForm):
@@ -42,25 +81,29 @@ class MenuItem(db.Model):
             'course'     : self.course,
         }
 
-class User(db.Model):
+class Rating(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(50), unique=True, nullable=False)
-    password_hash = db.Column(db.String(128), nullable=False)
-    role = db.Column(db.String(20), nullable=False)
+    restaurant_id = db.Column(db.Integer, db.ForeignKey('restaurant.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    rating = db.Column(db.Integer, nullable=False)
 
-    class LoginForm(FlaskForm):
-        username = StringField('Username', validators=[DataRequired()])
-        password = StringField('Password', validators=[DataRequired()])
-        submit = SubmitField('Login')
+    user = db.relationship('User', backref='ratings')
 
-    class RegistrationForm(FlaskForm):
-        username = StringField('Username', validators=[DataRequired()])
-        password = StringField('Password', validators=[DataRequired()])
-        confirm_password = StringField('Confirm Password', validators=[DataRequired()])
-        submit = SubmitField('Register')
+    @property
+    def serialize(self):
+        """Return object data in easily serializable format"""
+        return {
+            'id': self.id,
+            'restaurant_id': self.restaurant_id,
+            'user_id': self.user_id,
+            'rating': self.rating,
+        }
 
-    def set_password(self, password):
-        self.password_hash = generate_password_hash(password)
+    @property
+    def username(self):
+        return self.user.username
 
-    def check_password(self, password):
-        return check_password_hash(self.password_hash, password)
+class SearchForm(FlaskForm):
+    searched = StringField("Searched", validators=[DataRequired()])
+    submit = SubmitField("Submit")  
+
