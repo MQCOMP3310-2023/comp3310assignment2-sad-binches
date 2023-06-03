@@ -156,7 +156,7 @@ def newMenuItem(restaurant_id):
     else:
         return render_template('newmenuitem.html', restaurant_id = restaurant_id)
   else: 
-      logger.info('Failed attempt to create menu item  by %s (ID: %s): %s' % (current_user.username, current_user.id))
+      logger.info('Failed attempt to create menu item  by %s (ID: %s): %s' % (current_user.username, current_user.id, ''))
       flash('Sorry  %s You do not have permission to add a menu item to  %s' % (current_user.username, restaurant.name))
       return render_template('menu.html',items =items, restaurant = restaurant)
 

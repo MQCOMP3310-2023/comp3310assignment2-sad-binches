@@ -13,8 +13,6 @@ from flask_login import login_user, login_required, logout_user
 auth = Blueprint('auth', __name__)
 
 
-
-
 @auth.route('/register')
 def register_standard():
     return render_template('register.html')
@@ -30,6 +28,11 @@ def register():
         # Validate the form data
         if password != confirm_password:
             flash('Passwords do not match. Please try again.')
+            return redirect(url_for('auth.register'))
+        
+        # Check password complexity
+        if not is_password_complex(password):
+            flash('Password does not meet complexity requirements. Please try again.')
             return redirect(url_for('auth.register'))
 
         # Check if username already exists
@@ -77,3 +80,26 @@ def login():
 def logout():
     logout_user()
     return redirect(url_for('main.showRestaurants'))
+
+def is_password_complex(password):
+    # Minimum length of 8 characters
+    if len(password) < 8:
+        return False
+
+    # At least one uppercase letter
+    if not re.search(r'[A-Z]', password):
+        return False
+
+    # At least one lowercase letter
+    if not re.search(r'[a-z]', password):
+        return False
+
+    # At least one digit
+    if not re.search(r'\d', password):
+        return False
+
+    # At least one special character
+    if not re.search(r'[^a-zA-Z\d]', password):
+        return False
+
+    return True
