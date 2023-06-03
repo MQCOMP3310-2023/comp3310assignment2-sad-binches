@@ -21,9 +21,9 @@ def register_standard():
 @auth.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-        confirm_password = request.form['confirm_password']
+        username = escape(request.form['username'])
+        password = escape(request.form['password'])
+        confirm_password = escape(request.form['confirm_password'])
 
         # Validate the form data
         if password != confirm_password:
@@ -58,8 +58,8 @@ def login():
     form = User.LoginForm()  # Create an instance of the LoginForm
     logout_user()
     if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
+        username = escape(request.form['username'])
+        password = escape(request.form['password'])
 
         user = User.query.filter_by(username=username).first()
         if not user or not user.check_password(password):
