@@ -3,64 +3,91 @@
 {% include "header.html" %}
 
 <div class="row divider green">
-	<div class="col-md-12"></div>
+    <div class="col-md-12"></div>
 </div>
-<div class = 'flash'>
-	{% with messages = get_flashed_messages() %}
-{% if messages %}
 
-<ul>
-{% for message in messages %}
-  <li> <strong> {{ message }} </strong> </li>
-{% endfor %}
-</ul>
-{% endif %}
-{% endwith %}
-
+<div class="flash">
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+    <ul>
+        {% for message in messages %}
+        <li><strong>{{ message }}</strong></li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+    {% endwith %}
 </div>
 
 <div class="row">
-	<div class="col-md-4 col-md-offset-4">
-		<h2>Login</h2>
-			gaming
-        
-            <div class="row">
-                <div class="col-md-1"></div>
-                <div class="col-md-3">
-                    <h2>Appetizers</h2>
-                        {% for i in Users %}
-                                <div class="User">
-                                    <h3>{{i.username}}</h3>
-                                    <p>{{i.role}}</p>
-                                    <p class="menu-price">{{i.price}}</p>
-                                </div>
-                        {% endfor %}
-                </div>
-                </div>
-                <div class="col-md-1"></div>
-            </div>
-     
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-            
-			
-		<p>Don't have an account? <a href="{{ url_for('auth.register') }}">Register here</a>.</p>
-	</div>
+    <div class="col-md-6">
+        <h2>User Management</h2>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>User ID</th>
+                    <th>Username</th>
+                    <th>Role</th>
+                    <th>Edit User</th>
+                    <th>Delete User</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in Users %}
+                <tr>
+                    <td>{{ user.id }}</td>
+                    <td>{{ user.username }}</td>
+                    <td>{{ user.role }}</td>
+                    <td>
+                        <a href="/admin/edituser/{{ user.id }}" class="btn btn-primary">Edit</a>
+                    </td>
+                    <td>
+                        <form method="POST" action="/admin/deleteuser/{{ user.id }}" onsubmit="return confirm('Are you sure you want to delete this user?');">
+                            <button type="submit" class="btn btn-danger">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="col-md-6">
+        <h2>Restaurant Management</h2>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Restaurant ID</th>
+                    <th>Name</th>
+                    <th>Owner</th>
+                    <th>Edit Restaurant</th>
+                    <th>Delete Restaurant</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for restaurant in restaurants %}
+                  <tr>
+                    <td>{{ restaurant.id }}</td>
+                    <td>{{ restaurant.name }}</td>
+                    <td>
+                      {% if restaurant.ownerid %}
+                        {% set owner = User.query.get(restaurant.ownerid) %}
+                        {{ owner.username }}
+                      {% else %}
+                        No Owner Assigned
+                      {% endif %}
+                    </td>
+                    <td>
+                      <a href="/admin/editrestaurant/{{ restaurant.id }}" class="btn btn-primary">Edit</a>
+                    </td>
+                    <td>
+                        <form method="POST" action="/admin/delete-restaurant/{{ restaurant.id }}" onsubmit="return confirm('Are you sure you want to delete this restaurant?');">
+                            <button type="submit" class="btn btn-danger">Delete</button>
+                        </form>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+        </table>
+    </div>
 </div>
 
 {% endblock %}

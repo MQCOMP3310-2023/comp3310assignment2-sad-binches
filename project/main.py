@@ -14,6 +14,7 @@ from .models import Restaurant, MenuItem, SearchForm
 from sqlalchemy import asc
 from . import db
 import re
+from wtforms import SelectField
 
 main = Blueprint('main', __name__)
 csrf = CSRFProtect()
@@ -40,14 +41,19 @@ def showRestaurants():
 @main.route('/restaurant/new/', methods=['GET', 'POST'])
 @login_required 
 def newRestaurant():
-  if request.method == 'POST':
-      newRestaurant = Restaurant(name = sanitise_input(request.form['name']), ownerid = current_user.id)   
-      db.session.add(newRestaurant)
-      flash('Hi %s, You\'ve successfully created the New Restaurant %s' % (current_user.username, newRestaurant.name))
-      db.session.commit()
-      return redirect(url_for('main.showRestaurants'))
-  else:
-      return render_template('newRestaurant.html')
+    if request.method == 'POST':
+        newRestaurant = Restaurant(name=sanitise_input(request.form['name']), ownerid=current_user.id)   
+        db.session.add(newRestaurant)
+        db.session.commit()
+
+        if current_user.role != 'admin':
+            current_user.role = 'owner'
+            db.session.commit()
+
+        flash('Hi %s, You\'ve successfully created the New Restaurant %s' % (current_user.username, newRestaurant.name))
+        return redirect(url_for('main.showRestaurants'))
+    else:
+        return render_template('newRestaurant.html')
 
 
 # Security for input sanitisation + error caused by changes  that i couldn't fix without the db.commit
@@ -193,16 +199,93 @@ def newRestaurantOwner():
 #start of admin panel 
 @main.route('/admin')
 @login_required
-
 def admin():
-   if current_user.role == 'admin' :  
-    Users = db.session.query(User).all()
-                        
-    return render_template('admin.html',Users = Users)
-   else: 
-        flash('Sorry  %s You do not have permission access this part of the website' % (current_user.username))
+    if current_user.role != 'admin':
+        flash('Sorry, %s. You do not have permission to access this part of the website.' % current_user.username, 'error')
         return redirect(url_for('main.showRestaurants'))
+
+    users = User.query.all()
+    restaurants = Restaurant.query.all()
+
+    return render_template('admin.html', Users=users, restaurants=restaurants, User=User)
    
+class EditUserForm(FlaskForm):
+        role = SelectField('Role', choices=[('owner', 'Owner'), ('admin', 'Admin'), ('public', 'Public User')], validators=[DataRequired()])
+
+
+
+
+
+#adminPanel user edit interface
+@main.route('/admin/edituser/<int:user_id>', methods=['GET', 'POST'])
+@login_required
+def edit_user(user_id):
+    if current_user.role != 'admin':
+        flash('Sorry, %s. You do not have permission to edit user roles.' % current_user.username, 'error')
+        return redirect(url_for('main.showRestaurants'))
+    
+
+    user = User.query.get_or_404(user_id)
+    if user.username == 'admin':
+        flash('Sorry, you cannot edit the role of the admin user.', 'error')
+        return redirect(url_for('main.admin'))
+    
+    form = EditUserForm(obj=user)
+
+    if form.validate_on_submit():
+        user.role = form.role.data
+        db.session.commit()
+        flash('User role has been updated successfully.', 'success')
+        return redirect(url_for('main.admin'))
+
+    return render_template('edituser.html', form=form, user=user)
+
+
+@main.route('/admin/deleteuser/<int:user_id>', methods=['POST'])
+@login_required
+def delete_user(user_id):
+    if current_user.role != 'admin':
+        flash('Sorry, %s. You do not have permission to delete users.' % current_user.username, 'error')
+        return redirect(url_for('main.showRestaurants'))
+    
+    user = User.query.get_or_404(user_id)
+    if user.username == 'admin':
+        flash('Sorry, you cannot delete the admin user.', 'error')
+        return redirect(url_for('main.admin'))
+    
+    # Update owner IDs of associated restaurants to the admin account
+    restaurants = Restaurant.query.filter_by(ownerid=user.id).all()
+    admin_user = User.query.filter_by(username='admin').first()
+
+    for restaurant in restaurants:
+        restaurant.ownerid = admin_user.id
+
+    db.session.delete(user)
+    db.session.commit()
+    flash('User has been deleted successfully.', 'success')
+    return redirect(url_for('main.admin'))
+
+
+
+
+@main.route('/admin/delete-restaurant/<int:restaurant_id>', methods=['POST'])
+@login_required
+def delete_restaurant(restaurant_id):
+    if current_user.role != 'admin':
+        flash('Sorry, %s. You do not have permission to delete restaurants.' % current_user.username, 'error')
+        return redirect(url_for('main.admin'))
+
+    restaurant = Restaurant.query.get_or_404(restaurant_id)
+    db.session.delete(restaurant)
+    db.session.commit()
+    flash('Restaurant %s has been deleted successfully.' % restaurant.name, 'success')
+    return redirect(url_for('main.admin'))
+
+
+
+
+
+
 
 #Create search bar
 @main.route('/search', methods=["POST"])
