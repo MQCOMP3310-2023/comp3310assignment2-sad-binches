@@ -212,6 +212,13 @@ def admin():
 class EditUserForm(FlaskForm):
         role = SelectField('Role', choices=[('owner', 'Owner'), ('admin', 'Admin'), ('public', 'Public User')], validators=[DataRequired()])
 
+class EditRestaurantOwnerForm(FlaskForm):
+    ownerid = SelectField('Owner', coerce=int, validators=[DataRequired()])
+    submit = SubmitField('Update Owner')
+
+    def __init__(self, *args, **kwargs):
+        super(EditRestaurantOwnerForm, self).__init__(*args, **kwargs)
+        self.ownerid.choices = [(user.id, user.username) for user in User.query.all()]
 
 
 
@@ -265,9 +272,35 @@ def delete_user(user_id):
     flash('User has been deleted successfully.', 'success')
     return redirect(url_for('main.admin'))
 
+@main.route('/admin/editrestaurant/<int:restaurant_id>', methods=['GET', 'POST'])
+@login_required
+def edit_restaurant_owner(restaurant_id):
+    if current_user.role != 'admin':
+        flash('Sorry, %s. You do not have permission to edit restaurant owners.' % current_user.username, 'error')
+        return redirect(url_for('main.admin'))
 
+    restaurant = Restaurant.query.get_or_404(restaurant_id)
+    form = EditRestaurantOwnerForm()
 
+    if form.validate_on_submit():
+        new_owner_id = form.ownerid.data
 
+        if new_owner_id == restaurant.ownerid:
+            flash('The selected user is already the owner of this restaurant.', 'warning')
+        else:
+            new_owner = User.query.get(new_owner_id)
+            if not new_owner:
+                flash('Invalid user selected.', 'error')
+            else:
+                restaurant.ownerid = new_owner_id
+                db.session.commit()
+                flash('Restaurant owner has been updated successfully.', 'success')
+
+        return redirect(url_for('main.admin'))
+
+    return render_template('editrestaurantowner.html', form=form, restaurant=restaurant)
+
+#easier to make new function
 @main.route('/admin/delete-restaurant/<int:restaurant_id>', methods=['POST'])
 @login_required
 def delete_restaurant(restaurant_id):
