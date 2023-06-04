@@ -2,10 +2,10 @@
 ### Note 
 Keep in mind this can't be done last minute and to remember to keep security at the forefront of your mind when you implement these features
 please log when you are working on a feature so people don't double up - Kay
-to mark a task of simply adjust the below checkbox to look like this "[x]" and commit the change 
+to mark a task off simply adjust the below checkbox to look like this "[x]" and commit the change 
 
-- [ ] Admin Panel - can perform actions that affect users and can edit any item
-- [ ] Ratings system - Tied to user aka bob should be able to rate jims pizza restaurant between 1 and 5, with the app remembering his request
-- [ ] User profile management - when logged in a user should be able to manage their profile and depending on role see which restaurants they manage
-- [ ] Secure Logging - any action taken by a admin or error request thrown or who accesses what should go to a log file
-- [ ] Check Passwords are salted preferably with bcrypt
+- [X] Admin Panel - can perform actions that affect users and can edit any item
+- [X] Ratings system - Tied to user aka bob should be able to rate jims pizza restaurant between 1 and 5, with the app remembering his request
+- [X] User profile management - Admin can Adjust user attributes
+- [X] Secure Logging - any action taken by a admin or error request thrown or who accesses what should go to a log file
+
