@@ -70,4 +70,18 @@ You can run the website by typing:
 
 - python run.py
 
-You can now browse to the url http://localhost:8000/ to view the website.
+# Imports (pip install)
+- flask_login
+- flask_sslify
+- markupsafe
+- unittest
+- wtforms 
+- wtforms.validators 
+- werkzeug.security
+- flask_wtf
+- re
+- logging
+- crytpography
+
+
+You can now browse to the url https://192.168.20.103:8000/ to view the website.
