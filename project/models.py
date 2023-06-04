@@ -13,13 +13,13 @@ class User(UserMixin,db.Model):
 
     @property
     def serialize(self):
-       """Return object data in easily serializeable format"""
-       return {
-           'id'         : self.id,
-           'password'   : self.password_hash,
-           'username'   : self.username,
-           'role'       : self.role
-       }
+        """Return object data in easily serializeable format"""
+        return {
+            'id'         : self.id,
+            'password'   : self.password_hash,
+            'username'   : self.username,
+            'role'       : self.role
+        }
 
     class LoginForm(FlaskForm):
         username = StringField('Username', validators=[DataRequired()])

@@ -1,9 +1,8 @@
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify, escape
 from .models import Restaurant, MenuItem
 from sqlalchemy import text
 from . import db
 import json as pyjs
-import logging
 
 json = Blueprint('json', __name__)
 
@@ -17,8 +16,8 @@ def restaurantMenuJSON(restaurant_id):
     # Executing the query with named parameter
     result = db.session.execute(text(query), {'restaurant_id': restaurant_id})
     
-    # Converting rows to dictionaries
-    items_list = [dict(row) for row in result]
+    # Sanitize user-generated content by escaping special characters XSS fix
+    items_list = [dict((key, escape(value)) for key, value in row.items()) for row in result]
     
     # Returning JSON response using Flask's jsonify function
     return jsonify(items_list)
@@ -32,8 +31,8 @@ def menuItemJSON(restaurant_id, menu_id):
     # Executing the query with named parameter
     result = db.session.execute(text(query), {'menu_id': menu_id})
     
-    # Converting rows to dictionaries
-    items_list = [dict(row) for row in result]
+    # Sanitize user-generated content by escaping special characters
+    items_list = [dict((key, escape(value)) for key, value in row.items()) for row in result]
     
     # Returning JSON response using Flask's jsonify function
     return jsonify(items_list)
@@ -49,5 +48,3 @@ def restaurantsJSON():
 
     # Return the list of dictionaries as a JSON response
     return jsonify(rest_list)
-
-
