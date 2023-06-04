@@ -4,7 +4,7 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField
 from wtforms.validators import DataRequired
 from flask_login import UserMixin
-
+#user class
 class User(UserMixin,db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(50), unique=True, nullable=False)
@@ -33,7 +33,7 @@ class User(UserMixin,db.Model):
         submit = SubmitField('Register')
 
     def set_password(self, password):
-        self.password_hash = generate_password_hash(password)
+        self.password_hash = generate_password_hash(password)#hashes passwords
 
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
@@ -102,7 +102,7 @@ class Rating(db.Model):
     @property
     def username(self):
         return self.user.username
-
+#search form code
 class SearchForm(FlaskForm):
     searched = StringField("Searched", validators=[DataRequired()])
     submit = SubmitField("Submit")  

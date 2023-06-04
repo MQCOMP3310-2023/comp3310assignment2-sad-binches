@@ -15,14 +15,14 @@ def create_app():
     
     db.init_app(app)
 
-    login_manager = LoginManager()
-    login_manager.login_view = 'auth.login'
-    login_manager.init_app(app)
+    login_manager = LoginManager()  # Create an instance of LoginManager
+    login_manager.login_view = 'auth.login'  # Set the login view function
+    login_manager.init_app(app)  # Initialise LoginManager with the Flask application
 
 
     @login_manager.user_loader
     def load_user(userid):
-        return User.query.get(int(userid))
+        return User.query.get(int(userid))  # Load user from the database based on user ID
 
 
     sslify = SSLify(app) # Enable HTTPS redirection

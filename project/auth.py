@@ -30,42 +30,42 @@ file_handler.setFormatter(formatter)
 # Add the file handler to the logger
 logger.addHandler(file_handler)
 
-
+#login function
 @auth.route('/register')
 def register_standard():
     return render_template('register.html')
 
-
+# Secure registration of user
 @auth.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
-        username = escape(request.form['username'])
-        password = escape(request.form['password'])
-        confirm_password = escape(request.form['confirm_password'])
+        username = escape(request.form['username']) #input sanitise
+        password = escape(request.form['password']) #input sanitise
+        confirm_password = escape(request.form['confirm_password']) #input sanitise
 
         # Validate the form data
         if password != confirm_password:
-            logger.info('Account %s failed to be created due to passwords not matching' % (username))
+            logger.info('Account %s failed to be created due to passwords not matching' % (username)) # secure logging
             flash('Passwords do not match. Please try again.')
             return redirect(url_for('auth.register'))
         
         # Check password complexity
         if not is_password_complex(password):
-            logger.info('Account %s failed to be created due to password complexity' % (username))
+            logger.info('Account %s failed to be created due to password complexity' % (username)) # secure logging
             flash('Password does not meet complexity requirements. Please try again.')
             return redirect(url_for('auth.register'))
 
         # Check if username already exists
         existing_user = User.query.filter_by(username=username).first()
         if existing_user:
-            logger.info('Account %s failed to be created due to existing username' % (username))
+            logger.info('Account %s failed to be created due to existing username' % (username)) # secure logging
             flash('Username already exists. Please choose a different username.')
             return redirect(url_for('auth.register'))
         
-        # Check for special characters in the username
+        # Check for special characters in the username prevents injection type vulns
         special_char_pattern = r'[!@#$%^&*(),.?":{}|<>]'
         if re.search(special_char_pattern, username):
-            logger.info('Account failed to be created due to special characters')
+            logger.info('Account failed to be created due to special characters') # secure logging
             flash('Username contains invalid characters. Please choose a different username.')
             return redirect(url_for('auth.register'))
 
@@ -81,37 +81,41 @@ def register():
         return redirect(url_for('auth.register'))
     
 
-
+# login functionality 
 @auth.route('/login' , methods=['GET', 'POST'])
 def login():
     form = User.LoginForm()  # Create an instance of the LoginForm
     logout_user()
     if request.method == 'POST':
-        username = escape(request.form['username'])
-        password = escape(request.form['password'])
+        username = escape(request.form['username'])#input sanitise
+        password = escape(request.form['password'])#input sanitise
 
         user = User.query.filter_by(username=username).first()
+
+        #username and password match
         if not user or not user.check_password(password):
-            logger.info('Failed attempt to login to %s ' % (username))
+            logger.info('Failed attempt to login to %s ' % (username))# secure logging
             flash('Invalid username or password.')
             return redirect(url_for('auth.login'))
 
         # Store user ID in the session to maintain the session
         login_user(user,True)
-        logger.info('User logged in %s (ID: %s): %s' % (username, user.id, ''))
+        logger.info('User logged in %s (ID: %s): %s' % (username, user.id, ''))# secure logging
         flash('Logged in successfully.')
         return redirect(url_for('main.showRestaurants'))
     else:
         return render_template('login.html', form=form)
 
-
-@auth.route('/logout')
+# logout function
+@auth.route('/logout') 
 @login_required
-def logout():
+def logout(): 
     logger.info('User logged out')
-    logout_user()
+    logout_user() #securely cleans up logging out to ensure session vulnerabilities 
     return redirect(url_for('main.showRestaurants'))
 
+
+#password complexity function to prevent weak credentials 
 def is_password_complex(password):
     # Minimum length of 8 characters
     if len(password) < 8:
@@ -132,5 +136,4 @@ def is_password_complex(password):
     # At least one special character
     if not re.search(r'[^a-zA-Z\d]', password):
         return False
-
     return True
