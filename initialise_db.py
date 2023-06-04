@@ -19,7 +19,7 @@ def clear_database():
 def populate_db():
     clear_database()
     session = db.session()
-    # Create the owner and admin user
+    # Create the owner and admin user please reconfigure on actual deployment
     owner = User(username="owner", password_hash=generate_password_hash("owner", method='sha256'), role='owner')
     session.add(owner)
     session.commit()
