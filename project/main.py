@@ -401,7 +401,7 @@ def search():
             flash('Please enter valid a search query.', 'warning')
             return redirect(url_for('main.showRestaurants'))
         # Redirect to the search results page
-        logger.info('Search by %s (ID: %s): %s' % (current_user.username, current_user.id, text_searched))
+        logger.info('Search ed term %s' % (text_searched))
         return redirect(url_for('main.search_results', searched=text_searched))
     
     flash('Please enter a valid search query.', 'warning')

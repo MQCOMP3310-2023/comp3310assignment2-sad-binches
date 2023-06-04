@@ -92,7 +92,7 @@ def login():
 
         user = User.query.filter_by(username=username).first()
         if not user or not user.check_password(password):
-            logger.info('Failed attempt to login to %s (ID: %s):' % (username, user.id))
+            logger.info('Failed attempt to login to %s ' % (username))
             flash('Invalid username or password.')
             return redirect(url_for('auth.login'))
 
