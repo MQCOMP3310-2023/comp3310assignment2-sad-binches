@@ -17,10 +17,17 @@ Pip is the package manager for Python. You can install the remaining packages re
 
 You should have at least the following versions installed:
 
-- Python 3.9.6
-- Flask 2.2.3
-- Flask-Login 0.6.2
-- Flask-SQLAlchemy 3.0.3
+- Python 
+- Flask 
+- Flask-Login 
+- Flask-SQLAlchemy 
+- flask_sslify
+- markupsafe
+- wtforms 
+- flask_wtf
+- re
+- logging
+- crytpography
 
 You will also need sqlite installed for the database backend.
 
@@ -69,16 +76,6 @@ You can see that the database comes prepopulated with some restaurants and some 
 You can run the website by typing:
 
 - python run.py
-
-# Imports (pip install)
-- flask_login
-- flask_sslify
-- markupsafe
-- wtforms 
-- flask_wtf
-- re
-- logging
-- crytpography
 
 
 You can now browse to the url https://127.0.0.1:8000 to view the website.
