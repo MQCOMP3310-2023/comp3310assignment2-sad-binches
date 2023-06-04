@@ -350,7 +350,7 @@ def delete_restaurant(restaurant_id):
 
 class RatingForm(FlaskForm):
     rating = SelectField('Rating', choices=[('1', '1'), ('2', '2'), ('3', '3'), ('4', '4'), ('5', '5')],
-                         validators=[DataRequired()])
+                        validators=[DataRequired()])
     submit = SubmitField('Submit')
 
 
